@@ -554,7 +554,7 @@ crawler/
 
 ---
 
-### 🔲 Step 1 — Docker MySQL 기동 & DB 마이그레이션
+### ✅ Step 1 — Docker MySQL 기동 & DB 마이그레이션 (완료)
 
 ```bash
 # MySQL 컨테이너 실행

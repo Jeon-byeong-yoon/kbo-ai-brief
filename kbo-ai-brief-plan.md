@@ -262,7 +262,7 @@ kbo-ai-brief/
 - [x] API: POST /api/games/[id]/ai-review
 - [x] API: GET /api/standings
 
-### Step 1 — DB 기동 & 마이그레이션
+### ✅ Step 1 — DB 기동 & 마이그레이션 (완료)
 ```bash
 docker compose up -d
 npx prisma db push
