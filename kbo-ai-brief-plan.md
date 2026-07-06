@@ -269,25 +269,25 @@ npx prisma db push
 npm run db:seed
 ```
 
-### Step 2 — 글로벌 스타일 & 레이아웃
+### ✅ Step 2 — 글로벌 스타일 & 레이아웃 (완료)
 - globals.css (다크 테마, CSS 변수, 애니메이션)
 - layout.tsx (Header, 네비게이션)
 
-### Step 3 — 공통 UI 컴포넌트
+### ✅ Step 3 — 공통 UI 컴포넌트 (완료)
 - StatusBadge.tsx
 - LoadingSpinner.tsx
 - TeamLogo.tsx
 
-### Step 4 — 경기 관련 컴포넌트
+### ✅ Step 4 — 경기 관련 컴포넌트 (완료)
 - GameCard.tsx
 - ScoreBoard.tsx
 - InningScoreTable.tsx
 - AiContent.tsx (프리뷰/리뷰 표시 + 생성 버튼)
 
-### Step 5 — 순위 컴포넌트
+### ✅ Step 5 — 순위 컴포넌트 (완료)
 - StandingsTable.tsx
 
-### Step 6 — 페이지 구현
+### ✅ Step 6 — 페이지 구현 (완료)
 - app/page.tsx (홈 화면)
 - app/games/[id]/page.tsx (경기 상세)
 - app/standings/page.tsx (팀 순위)
