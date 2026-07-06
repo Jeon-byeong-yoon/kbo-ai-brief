@@ -1,0 +1,133 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(50)
+  shortName String   @db.VarChar(10) @map("short_name")
+  logoUrl   String?  @db.VarChar(255) @map("logo_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  homeGames   Game[]      @relation("HomeTeam")
+  awayGames   Game[]      @relation("AwayTeam")
+  standings   Standing[]
+  teamStats   TeamStat[]
+
+  @@map("teams")
+}
+
+model Game {
+  id            Int        @id @default(autoincrement())
+  gameDate      DateTime   @map("game_date") @db.Date
+  startTime     String     @db.VarChar(10) @map("start_time")
+  stadium       String     @db.VarChar(100)
+  homeTeamId    Int        @map("home_team_id")
+  awayTeamId    Int        @map("away_team_id")
+  status        GameStatus @default(SCHEDULED)
+  currentInning String?    @db.VarChar(20) @map("current_inning")
+  homeScore     Int        @default(0) @map("home_score")
+  awayScore     Int        @default(0) @map("away_score")
+  homeHits      Int        @default(0) @map("home_hits")
+  awayHits      Int        @default(0) @map("away_hits")
+  homeErrors    Int        @default(0) @map("home_errors")
+  awayErrors    Int        @default(0) @map("away_errors")
+  homeWalks     Int        @default(0) @map("home_walks")
+  awayWalks     Int        @default(0) @map("away_walks")
+  inningScores  Json?      @map("inning_scores") // 이닝별 점수 JSON
+  lastUpdatedAt DateTime?  @map("last_updated_at")
+  createdAt     DateTime   @default(now()) @map("created_at")
+  updatedAt     DateTime   @updatedAt @map("updated_at")
+
+  homeTeam  Team       @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam  Team       @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  aiPreview AiPreview?
+  aiReview  AiReview?
+
+  @@map("games")
+}
+
+enum GameStatus {
+  SCHEDULED
+  LIVE
+  FINAL
+  CANCELLED
+  POSTPONED
+}
+
+model Standing {
+  id          Int      @id @default(autoincrement())
+  teamId      Int      @map("team_id")
+  season      Int
+  rank        Int
+  gamesPlayed Int      @default(0) @map("games_played")
+  wins        Int      @default(0)
+  losses      Int      @default(0)
+  draws       Int      @default(0)
+  winRate     Float    @default(0) @map("win_rate")
+  gamesBehind Float    @default(0) @map("games_behind")
+  last10      String?  @db.VarChar(30) @map("last_10") // e.g. "6승3패1무"
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, season])
+  @@map("standings")
+}
+
+model TeamStat {
+  id             Int      @id @default(autoincrement())
+  teamId         Int      @map("team_id")
+  season         Int
+  battingAverage Float    @default(0) @map("batting_average")
+  era            Float    @default(0)
+  runs           Int      @default(0)
+  hits           Int      @default(0)
+  homeRuns       Int      @default(0) @map("home_runs")
+  stolenBases    Int      @default(0) @map("stolen_bases")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  @@unique([teamId, season])
+  @@map("team_stats")
+}
+
+model AiPreview {
+  id          Int      @id @default(autoincrement())
+  gameId      Int      @unique @map("game_id")
+  content     String   @db.Text
+  modelName   String   @db.VarChar(50) @map("model_name")
+  generatedAt DateTime @map("generated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@map("ai_previews")
+}
+
+model AiReview {
+  id          Int      @id @default(autoincrement())
+  gameId      Int      @unique @map("game_id")
+  content     String   @db.Text
+  modelName   String   @db.VarChar(50) @map("model_name")
+  generatedAt DateTime @map("generated_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  game Game @relation(fields: [gameId], references: [id])
+
+  @@map("ai_reviews")
+}
