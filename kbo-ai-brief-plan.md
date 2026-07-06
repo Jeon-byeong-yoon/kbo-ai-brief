@@ -292,7 +292,7 @@ npm run db:seed
 - app/games/[id]/page.tsx (경기 상세)
 - app/standings/page.tsx (팀 순위)
 
-### Step 7 — Python 크롤러 골격
+### ✅ Step 7 — Python 크롤러 골격 (완료)
 - crawler/db.py, utils.py
 - crawler/collect_schedule.py
 - crawler/collect_standings.py

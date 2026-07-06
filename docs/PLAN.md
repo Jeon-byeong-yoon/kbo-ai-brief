@@ -620,7 +620,7 @@ npx prisma studio
 
 ---
 
-### 🔲 Step 7 — Python 크롤러 골격
+### ✅ Step 7 — Python 크롤러 골격 (완료)
 
 | 파일 | 내용 |
 |---|---|
