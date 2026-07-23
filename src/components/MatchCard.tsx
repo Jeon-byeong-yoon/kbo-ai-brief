@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { KBOGame } from '../types/kbo';
 
 interface MatchCardProps {
@@ -53,8 +54,8 @@ export const MatchCard: React.FC<MatchCardProps> = ({ game, favoriteTeam, onOpen
           )}
         </div>
 
-        {/* Status Indicator */}
-        <div>
+        {/* Status Indicator & Detail Link */}
+        <div className="flex items-center gap-2">
           {isLive && (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/30 animate-pulse">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
@@ -71,82 +72,92 @@ export const MatchCard: React.FC<MatchCardProps> = ({ game, favoriteTeam, onOpen
               경기 예정
             </span>
           )}
+
+          <Link
+            href={`/games/${game.id}`}
+            className="text-[11px] font-bold text-slate-400 hover:text-amber-400 transition-colors flex items-center gap-0.5 bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-800"
+          >
+            <span>상세점수</span>
+            <span>→</span>
+          </Link>
         </div>
       </div>
 
       {/* Match Up Info (Away vs Home) */}
-      <div className="grid grid-cols-7 items-center gap-2 mb-4">
-        {/* Away Team */}
-        <div className="col-span-3 flex items-center justify-between pr-2">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border ${game.awayTeam.logoBg}`}
-            >
-              {game.awayTeam.shortName}
-            </div>
-            <div>
+      <Link href={`/games/${game.id}`} className="block group-hover:opacity-95 transition-opacity">
+        <div className="grid grid-cols-7 items-center gap-2 mb-4">
+          {/* Away Team */}
+          <div className="col-span-3 flex items-center justify-between pr-2">
+            <div className="flex items-center gap-3">
               <div
-                className={`font-bold text-sm flex items-center gap-1 ${
-                  isAwayWinner ? 'text-white font-extrabold' : 'text-slate-200'
-                }`}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border ${game.awayTeam.logoBg}`}
               >
-                <span>{game.awayTeam.name}</span>
-                {favoriteTeam === game.awayTeam.code && (
-                  <span className="text-amber-400 text-xs">⭐</span>
-                )}
+                {game.awayTeam.shortName}
               </div>
-              <div className="text-[11px] text-slate-400">
-                선발 {game.awayPitcher}
+              <div>
+                <div
+                  className={`font-bold text-sm flex items-center gap-1 ${
+                    isAwayWinner ? 'text-white font-extrabold' : 'text-slate-200'
+                  }`}
+                >
+                  <span>{game.awayTeam.name}</span>
+                  {favoriteTeam === game.awayTeam.code && (
+                    <span className="text-amber-400 text-xs">⭐</span>
+                  )}
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  선발 {game.awayPitcher}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Score & VS */}
+          <div className="col-span-1 text-center">
+            {isScheduled ? (
+              <span className="text-xs font-bold text-slate-500 bg-slate-800/80 px-2 py-1 rounded-md">
+                VS
+              </span>
+            ) : (
+              <div className="flex items-center justify-center gap-1.5 font-black text-xl tracking-tight">
+                <span className={isAwayWinner ? 'text-rose-400' : 'text-slate-300'}>
+                  {game.awayScore}
+                </span>
+                <span className="text-slate-600 text-sm font-normal">:</span>
+                <span className={isHomeWinner ? 'text-rose-400' : 'text-slate-300'}>
+                  {game.homeScore}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Home Team */}
+          <div className="col-span-3 flex items-center justify-end pl-2">
+            <div className="flex items-center gap-3 text-right">
+              <div>
+                <div
+                  className={`font-bold text-sm flex items-center justify-end gap-1 ${
+                    isHomeWinner ? 'text-white font-extrabold' : 'text-slate-200'
+                  }`}
+                >
+                  {favoriteTeam === game.homeTeam.code && (
+                    <span className="text-amber-400 text-xs">⭐</span>
+                  )}
+                  <span>{game.homeTeam.name}</span>
+                </div>
+                <div className="text-[11px] text-slate-400">
+                  선발 {game.homePitcher}
+                </div>
+              </div>
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border ${game.homeTeam.logoBg}`}
+              >
+                {game.homeTeam.shortName}
               </div>
             </div>
           </div>
         </div>
-
-        {/* Score & VS */}
-        <div className="col-span-1 text-center">
-          {isScheduled ? (
-            <span className="text-xs font-bold text-slate-500 bg-slate-800/80 px-2 py-1 rounded-md">
-              VS
-            </span>
-          ) : (
-            <div className="flex items-center justify-center gap-1.5 font-black text-xl tracking-tight">
-              <span className={isAwayWinner ? 'text-rose-400' : 'text-slate-300'}>
-                {game.awayScore}
-              </span>
-              <span className="text-slate-600 text-sm font-normal">:</span>
-              <span className={isHomeWinner ? 'text-rose-400' : 'text-slate-300'}>
-                {game.homeScore}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Home Team */}
-        <div className="col-span-3 flex items-center justify-end pl-2">
-          <div className="flex items-center gap-3 text-right">
-            <div>
-              <div
-                className={`font-bold text-sm flex items-center justify-end gap-1 ${
-                  isHomeWinner ? 'text-white font-extrabold' : 'text-slate-200'
-                }`}
-              >
-                {favoriteTeam === game.homeTeam.code && (
-                  <span className="text-amber-400 text-xs">⭐</span>
-                )}
-                <span>{game.homeTeam.name}</span>
-              </div>
-              <div className="text-[11px] text-slate-400">
-                선발 {game.homePitcher}
-              </div>
-            </div>
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-sm border ${game.homeTeam.logoBg}`}
-            >
-              {game.homeTeam.shortName}
-            </div>
-          </div>
-        </div>
-      </div>
+      </Link>
 
       {/* AI Briefing Button / Trigger */}
       <div className="pt-3 border-t border-slate-800/60 flex items-center justify-between gap-2">
