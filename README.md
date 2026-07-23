@@ -1,126 +1,58 @@
-# ⚾ KBO AI Brief
+# ⚾ KBO AI Brief - 야구 경기 분석 & 관전 포인트 웹앱
 
-> KBO 경기 정보 + AI 프리뷰/리뷰 웹앱
-
-KBO 경기 데이터를 수집하고, 경기 전후에 AI가 관전 포인트와 경기 흐름을 요약해주는 **준실시간 KBO 경기 정보 웹앱**입니다.
-
-개인 포트폴리오용 사이드 프로젝트입니다.
+KBO 리그 경기 실시간 스코어, 일자별 팀 순위/순위 변동 지표, 네이버 스포츠 기반 주요 선수 세부 기록 및 OpenAI GPT-4o 기반 경기 프리뷰/리뷰 요약을 제공하는 현대적인 야구 정보 대시보드 웹 애플리케이션입니다.
 
 ---
 
-## 주요 기능
+## 🌟 주요 구현 기능 (Phase 1 MVP)
 
-| 기능 | 설명 |
-|---|---|
-| 📅 오늘 경기 목록 | 오늘 열리는 KBO 경기 목록 및 실시간 상태 표시 |
-| 🏆 팀 순위 | 현재 시즌 KBO 팀 순위 및 최근 10경기 흐름 |
-| 🤖 AI 경기 프리뷰 | 경기 시작 전, AI가 관전 포인트 3개 + 변수 2개 요약 |
-| 📊 AI 경기 리뷰 | 경기 종료 후, AI가 흐름·승부처·인상적인 활약 요약 |
-| ⏱️ 준실시간 스코어 | 경기 중 2분 단위로 스코어 자동 갱신 |
+### 1. ⭐ 관심 구단 (MY 팀) 선택 & 경기 최상단 핀 고정
+- **상단 헤더 전용 선택기**: `한화 이글스`, `LG 트윈스`, `KIA 타이거즈` 등 본인의 관심 구단을 지정 가능.
+- **최상단 핀 고정 알고리즘**: 선택된 MY 팀의 경기가 목록 상단으로 자동 정렬되어 즉시 스코어 확인 가능.
+- **LocalStorage 동기화**: 브라우저를 재방문해도 지정한 MY 팀 선호 설정이 지속 유지됨.
+
+### 2. 📅 일자별 경기 스코어 & 30초 실시간 자동 폴링 (LIVE)
+- **일자 이동 탭**: 어제 / 오늘 / 내일 일자별 경기 일정 및 스코어 조회.
+- **실시간 경기 중계 반영**: 진행 중인 경기(`IN_PROGRESS`)의 이닝 상태(예: 7회말)와 스코어 30초 간격 자동 갱신.
+- **상태별 필터링**: `전체`, `진행중`, `종료`, `예정` 알약형 피크 필터 제공.
+
+### 3. 🏆 2026 KBO 팀 순위 & 전날 대비 순위 변동 지표
+- **순위 변동 지표**: 전날 대비 순위 상상/하락(`▲1`, `▼2`, `-`) 배지 렌더링.
+- **포스트시즌 가시화**: 1위(우승권) 및 1~5위 포스트시즌 진출권 하이라이트.
+- **상세 지표**: 경기수, 승/패/무, 승률, 승차, 최근 10경기 성적, 연속 연승/연패 기록 표출.
+
+### 4. ⭐ 네이버 스포츠 기준 주요 선수 세부 기록 (Top 5 랭킹)
+- **투수 지표 랭킹**: 평균자책점(ERA), 승/패/세이브, WHIP, 삼진, WAR.
+- **타자 지표 랭킹**: 타율(AVG), 홈런(HR), 타점(RBI), OPS, WAR.
+- **스위칭 탭**: 투수 랭킹과 타자 랭킹을 한눈에 손쉽게 전환.
+
+### 5. 📜 2025 전년도 시즌 성적 & 챔피언 우승 기록
+- **전년도 복기 탭**: 2025년 최종 순위, 승률, 포스트시즌 최종 진출 결과 표 표출.
+- **우승팀 하이라이트**: 2025 한국시리즈 우승팀(`KIA 타이거즈`) 우승 뱃지 표시.
+
+### 6. 🔮 AI 관전 포인트 & 📊 AI 경기 요약 모달
+- **AI Preview**: 경기 시작 전 주요 선발 매치업 분석 및 핵심 관전 포인트.
+- **AI Review**: 경기 종료/진행 중 핫이슈 헤드라인 및 승패 결정 요인 요약.
 
 ---
 
-## 기술 스택
+## 🛠️ 기술 스택 (Tech Stack)
 
-| 레이어 | 기술 |
-|---|---|
-| 프론트엔드 | Next.js 14 (App Router), TypeScript, Tailwind CSS |
-| 백엔드 | Next.js API Routes |
-| ORM | Prisma |
-| 데이터베이스 | MySQL 8.0 (Docker) |
-| AI | OpenAI API (gpt-4o-mini) |
-| 크롤러 | Python (requests + BeautifulSoup) |
+- **Framework**: Next.js 16 (App Router, Turbopack)
+- **UI & Styling**: React 19, Tailwind CSS v3, Glassmorphism Sporty Dark Theme
+- **Language**: TypeScript
+- **State & Sync**: LocalStorage Client State, Dynamic Polling Hook
 
 ---
 
-## 실행 방법
-
-### 사전 준비
-
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) 설치
-- Node.js 18+ 설치
-- OpenAI API Key (없으면 더미 응답으로 동작)
-
-### 로컬 실행
+## 🚀 로컬 실행 방법
 
 ```bash
-# 1. 환경변수 설정
-cp .env.example .env.local
-# .env.local에서 OPENAI_API_KEY 입력 (선택)
-
-# 2. Docker MySQL 실행
-docker compose up -d
-
-# 3. 의존성 설치
+# dependencies 설치
 npm install
 
-# 4. DB 스키마 적용
-npx prisma db push
-
-# 5. 더미 데이터 삽입
-npm run db:seed
-
-# 6. 개발 서버 실행
+# 개발 서버 가동
 npm run dev
 ```
 
-브라우저에서 `http://localhost:3000` 접속
-
----
-
-## 환경변수
-
-`.env.example` 파일을 복사해서 `.env.local`을 만들고 아래 값을 설정하세요.
-
-| 변수 | 설명 | 필수 |
-|---|---|---|
-| `DATABASE_URL` | MySQL 연결 URL | ✅ |
-| `OPENAI_API_KEY` | OpenAI API Key | ❌ (없으면 더미 응답) |
-| `OPENAI_MODEL` | 사용 모델 (기본: gpt-4o-mini) | ❌ |
-| `NEXT_PUBLIC_POLL_INTERVAL` | 폴링 간격 ms (기본: 120000) | ❌ |
-
----
-
-## API 엔드포인트
-
-| 메서드 | 경로 | 설명 |
-|---|---|---|
-| GET | `/api/games/today` | 오늘 경기 목록 |
-| GET | `/api/games/:id` | 경기 상세 정보 |
-| GET | `/api/standings` | 팀 순위 |
-| POST | `/api/games/:id/ai-preview` | AI 프리뷰 생성 |
-| POST | `/api/games/:id/ai-review` | AI 리뷰 생성 |
-
----
-
-## 프로젝트 구조
-
-```
-kbo-ai-brief/
-├── docs/PLAN.md          # 전체 프로젝트 계획서
-├── src/app/              # Next.js 페이지 & API Routes
-├── src/components/       # UI 컴포넌트
-├── src/lib/              # Prisma, OpenAI 클라이언트
-├── src/types/            # TypeScript 타입 정의
-├── prisma/               # DB 스키마 & 시드 데이터
-├── crawler/              # Python 데이터 수집 스크립트
-└── docker-compose.yml    # MySQL Docker 설정
-```
-
----
-
-## 로드맵
-
-- [x] 프로젝트 초기 설정 (Next.js + Prisma + MySQL)
-- [x] API 설계 및 구현
-- [ ] 프론트엔드 UI 구현
-- [ ] Python 크롤러 연결
-- [ ] 실서비스 배포 (Vercel + Railway)
-- [ ] 관심 팀 기능
-- [ ] PWA 변환
-
----
-
-## 라이선스
-
-MIT License
+브라우저에서 **`http://localhost:3000`** 접속
