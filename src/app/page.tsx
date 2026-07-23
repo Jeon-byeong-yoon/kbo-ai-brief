@@ -1,65 +1,388 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import React, { useState, useMemo, useEffect } from 'react';
+import { Header } from '@/components/Header';
+import { MatchCard } from '@/components/MatchCard';
+import { StandingsTable } from '@/components/StandingsTable';
+import { PlayerLeaderboard } from '@/components/PlayerLeaderboard';
+import { HistoricalStandings } from '@/components/HistoricalStandings';
+import { AIBriefModal } from '@/components/AIBriefModal';
+import {
+  KBOGame,
+  KBOTeamStanding,
+  PitcherLeader,
+  BatterLeader,
+  HistoricalSeason,
+} from '@/types/kbo';
+
+export default function HomePage() {
+  const [selectedDate, setSelectedDate] = useState<string>('2026-07-23');
+  const [selectedTeam, setSelectedTeam] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'FINISHED' | 'SCHEDULED'>('ALL');
+  
+  // My Favorite Team (LocalStorage sync)
+  const [favoriteTeam, setFavoriteTeam] = useState<string>('HANWHA'); // 기본 한화 이글스 선호
+
+  // Load & Save Favorite Team via LocalStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('kbo_favorite_team');
+    if (saved) {
+      setFavoriteTeam(saved);
+    }
+  }, []);
+
+  const handleFavoriteTeamChange = (teamCode: string) => {
+    setFavoriteTeam(teamCode);
+    localStorage.setItem('kbo_favorite_team', teamCode);
+  };
+
+  // Right Sidebar Tab State
+  const [rightSidebarTab, setRightSidebarTab] = useState<'TEAM_STANDINGS' | 'PLAYER_LEADERS' | 'HISTORICAL_2025'>('TEAM_STANDINGS');
+
+  // Real API Data States
+  const [gamesState, setGamesState] = useState<KBOGame[]>([]);
+  const [standingsState, setStandingsState] = useState<KBOTeamStanding[]>([]);
+  const [historicalState, setHistoricalState] = useState<HistoricalSeason | null>(null);
+  const [pitchersState, setPitchersState] = useState<PitcherLeader[]>([]);
+  const [battersState, setBattersState] = useState<BatterLeader[]>([]);
+  
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [lastUpdatedTime, setLastUpdatedTime] = useState<string>('');
+
+  // Modal State
+  const [activeModalGame, setActiveModalGame] = useState<KBOGame | null>(null);
+  const [activeBriefingType, setActiveBriefingType] = useState<'PREVIEW' | 'REVIEW' | null>(null);
+
+  // Fetch Real KBO API Data
+  const fetchRealKBOData = async () => {
+    try {
+      setLastUpdatedTime(new Date().toLocaleTimeString('ko-KR'));
+      
+      // 1. Fetch Real Games
+      const gamesRes = await fetch(`/api/games?date=${selectedDate}`);
+      const gamesJson = await gamesRes.json();
+      if (gamesJson.success) {
+        setGamesState(gamesJson.data);
+      }
+
+      // 2. Fetch Real Standings
+      const standingsRes = await fetch('/api/standings');
+      const standingsJson = await standingsRes.json();
+      if (standingsJson.success) {
+        setStandingsState(standingsJson.data.standings);
+        setHistoricalState(standingsJson.data.historical2025);
+      }
+
+      // 3. Fetch Real Player Stats
+      const playersRes = await fetch('/api/players');
+      const playersJson = await playersRes.json();
+      if (playersJson.success) {
+        setPitchersState(playersJson.data.pitchers);
+        setBattersState(playersJson.data.batters);
+      }
+    } catch (err) {
+      console.error('Failed to fetch real KBO data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial Fetch & 30-sec Auto Polling Effect
+  useEffect(() => {
+    fetchRealKBOData();
+
+    const interval = setInterval(() => {
+      fetchRealKBOData();
+    }, 30000); // 30초 실시간 주기적 자동 갱신
+
+    return () => clearInterval(interval);
+  }, [selectedDate]);
+
+  // Filter & Sort Games (관심 구단 경기 최상단 핀 고정 정렬)
+  const sortedFilteredGames = useMemo(() => {
+    const filtered = gamesState.filter((game) => {
+      // Date matching
+      if (game.date !== selectedDate) return false;
+
+      // Team matching filter
+      if (selectedTeam !== 'ALL') {
+        const isAway = game.awayTeam.code === selectedTeam;
+        const isHome = game.homeTeam.code === selectedTeam;
+        if (!isAway && !isHome) return false;
+      }
+
+      // Status matching
+      if (statusFilter !== 'ALL' && game.status !== statusFilter) return false;
+
+      return true;
+    });
+
+    // 관심 구단(My Team) 경기 최상단 핀 고정 정렬
+    if (favoriteTeam && favoriteTeam !== 'NONE') {
+      return [...filtered].sort((a, b) => {
+        const aIsMyTeam = a.awayTeam.code === favoriteTeam || a.homeTeam.code === favoriteTeam;
+        const bIsMyTeam = b.awayTeam.code === favoriteTeam || b.homeTeam.code === favoriteTeam;
+        if (aIsMyTeam && !bIsMyTeam) return -1;
+        if (!aIsMyTeam && bIsMyTeam) return 1;
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [gamesState, selectedDate, selectedTeam, statusFilter, favoriteTeam]);
+
+  // Statistics Count
+  const stats = useMemo(() => {
+    const todayGames = gamesState.filter((g) => g.date === selectedDate);
+    return {
+      total: todayGames.length,
+      live: todayGames.filter((g) => g.status === 'IN_PROGRESS').length,
+      finished: todayGames.filter((g) => g.status === 'FINISHED').length,
+      scheduled: todayGames.filter((g) => g.status === 'SCHEDULED').length,
+    };
+  }, [gamesState, selectedDate]);
+
+  const handleOpenBriefing = (game: KBOGame, type: 'PREVIEW' | 'REVIEW') => {
+    setActiveModalGame(game);
+    setActiveBriefingType(type);
+  };
+
+  const handleCloseModal = () => {
+    setActiveModalGame(null);
+    setActiveBriefingType(null);
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-rose-500 selection:text-white pb-16">
+      {/* Dynamic Background Effects */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div className="absolute -top-40 -left-40 w-96 h-96 bg-rose-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -right-40 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-10 left-1/3 w-96 h-96 bg-emerald-600/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative z-10">
+        {/* Navigation Bar */}
+        <Header
+          selectedDate={selectedDate}
+          onDateChange={setSelectedDate}
+          selectedTeam={selectedTeam}
+          onTeamSelect={setSelectedTeam}
+          favoriteTeam={favoriteTeam}
+          onFavoriteTeamChange={handleFavoriteTeamChange}
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+
+        {/* Main Content Layout */}
+        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-8">
+          {/* AI Banner / Today Summary */}
+          <div className="bg-gradient-to-r from-slate-900 via-slate-900/90 to-indigo-950/70 border border-slate-800/90 rounded-3xl p-6 shadow-xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-full bg-gradient-to-l from-rose-500/10 to-transparent pointer-events-none" />
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1">
+                    <span>⚡</span>
+                    <span>실시간 KBO AI 핫이슈</span>
+                  </span>
+                  <span className="text-xs text-slate-400">
+                    {selectedDate} KBO 리그 • {lastUpdatedTime || '실시간 갱신'}
+                  </span>
+                </div>
+
+                <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
+                  {favoriteTeam !== 'NONE' ? (
+                    <span className="flex items-center gap-2">
+                      <span className="text-amber-400">⭐ [{favoriteTeam}]</span>
+                      <span>잠실 라이벌 혈투! 8회말 결승 2타점 적시타</span>
+                    </span>
+                  ) : (
+                    'KIA 선두 독주 사수, 잠실에선 8회말 극적 역전 혈투!'
+                  )}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl">
+                  8회말 2타점 역전 적시타로 리드를 잡은 LG와 7이닝 1실점 호투로 10승을 달성한 KIA 양현종의 활약이 돋보입니다.
+                </p>
+              </div>
+
+              {/* Status Pills Filter */}
+              <div className="flex items-center gap-1.5 bg-slate-950/70 p-1.5 rounded-2xl border border-slate-800 shrink-0 self-stretch md:self-auto justify-center">
+                <button
+                  onClick={() => setStatusFilter('ALL')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    statusFilter === 'ALL'
+                      ? 'bg-slate-800 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  전체 ({stats.total})
+                </button>
+                <button
+                  onClick={() => setStatusFilter('IN_PROGRESS')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1 ${
+                    statusFilter === 'IN_PROGRESS'
+                      ? 'bg-rose-600 text-white shadow-md shadow-rose-600/30'
+                      : 'text-rose-400 hover:text-rose-300'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                  진행중 ({stats.live})
+                </button>
+                <button
+                  onClick={() => setStatusFilter('FINISHED')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    statusFilter === 'FINISHED'
+                      ? 'bg-slate-800 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  종료 ({stats.finished})
+                </button>
+                <button
+                  onClick={() => setStatusFilter('SCHEDULED')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    statusFilter === 'SCHEDULED'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-indigo-400 hover:text-indigo-300'
+                  }`}
+                >
+                  예정 ({stats.scheduled})
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Grid Layout: Left (Match Cards), Right (Standings & Player Stats Tabs) */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* Left Column: Match Cards (6 cols) */}
+            <div className="lg:col-span-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                  <span>📅</span>
+                  <span>{selectedDate} 실시간 경기 일정 & 스코어</span>
+                  {favoriteTeam !== 'NONE' && (
+                    <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1">
+                      <span>⭐ MY 팀 ({favoriteTeam}) 핀 고정됨</span>
+                    </span>
+                  )}
+                </h3>
+                <span className="text-xs text-rose-400 font-semibold flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
+                  실시간 API 갱신중
+                </span>
+              </div>
+
+              {isLoading ? (
+                <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-12 text-center">
+                  <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-xs text-slate-400 font-semibold">실시간 KBO 야구 데이터를 수집 중입니다...</p>
+                </div>
+              ) : sortedFilteredGames.length === 0 ? (
+                <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-12 text-center">
+                  <span className="text-4xl">⚾</span>
+                  <h4 className="mt-3 font-bold text-slate-300 text-sm">
+                    선택한 조건의 경기가 없습니다
+                  </h4>
+                  <p className="text-xs text-slate-500 mt-1">
+                    다른 날짜나 구단 필터를 선택해보세요.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setSelectedTeam('ALL');
+                      setStatusFilter('ALL');
+                    }}
+                    className="mt-4 px-3 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-300 hover:bg-slate-700"
+                  >
+                    필터 초기화
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sortedFilteredGames.map((game) => (
+                    <MatchCard
+                      key={game.id}
+                      game={game}
+                      favoriteTeam={favoriteTeam}
+                      onOpenBriefing={handleOpenBriefing}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Right Column: Tabbed Standings & Player Stats & Historical (6 cols) */}
+            <div className="lg:col-span-6 space-y-4">
+              {/* Tab Selector Buttons */}
+              <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 shadow-md">
+                <button
+                  onClick={() => setRightSidebarTab('TEAM_STANDINGS')}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+                    rightSidebarTab === 'TEAM_STANDINGS'
+                      ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🏆 실제 KBO 팀 순위
+                </button>
+                <button
+                  onClick={() => setRightSidebarTab('PLAYER_LEADERS')}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+                    rightSidebarTab === 'PLAYER_LEADERS'
+                      ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  ⭐ 선수 기록 (투수/타자)
+                </button>
+                <button
+                  onClick={() => setRightSidebarTab('HISTORICAL_2025')}
+                  className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all text-center ${
+                    rightSidebarTab === 'HISTORICAL_2025'
+                      ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  📜 2025 전년도 성적
+                </button>
+              </div>
+
+              {/* Tab Content 1: Team Standings */}
+              {rightSidebarTab === 'TEAM_STANDINGS' && (
+                <StandingsTable
+                  standings={standingsState}
+                  selectedTeam={selectedTeam}
+                  onTeamSelect={setSelectedTeam}
+                  title={`실제 KBO 팀 순위 (${selectedDate})`}
+                  subtitle="전날 대비 순위 변동(▲/▼) 반영"
+                />
+              )}
+
+              {/* Tab Content 2: Player Leaderboards */}
+              {rightSidebarTab === 'PLAYER_LEADERS' && (
+                <PlayerLeaderboard
+                  pitcherLeaders={pitchersState}
+                  batterLeaders={battersState}
+                />
+              )}
+
+              {/* Tab Content 3: Historical Season 2025 */}
+              {rightSidebarTab === 'HISTORICAL_2025' && historicalState && (
+                <HistoricalStandings
+                  season={historicalState}
+                  selectedTeam={selectedTeam}
+                  onTeamSelect={setSelectedTeam}
+                />
+              )}
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {/* AI Briefing Modal */}
+      <AIBriefModal
+        game={activeModalGame}
+        briefingType={activeBriefingType}
+        onClose={handleCloseModal}
+      />
     </div>
   );
 }

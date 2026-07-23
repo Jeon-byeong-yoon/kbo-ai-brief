@@ -1,6 +1,10 @@
-import { PrismaClient, GameStatus } from "@prisma/client";
+import { PrismaClient, GameStatus, Prisma } from "@prisma/client";
+import { PrismaMariaDb } from "@prisma/adapter-mariadb";
+import "dotenv/config";
 
-const prisma = new PrismaClient();
+const adapter = new PrismaMariaDb(process.env.DATABASE_URL!);
+const prisma = new PrismaClient({ adapter });
+
 
 async function main() {
   console.log("🌱 KBO AI Brief 시드 데이터 삽입 시작...");
@@ -182,7 +186,7 @@ async function main() {
       awayErrors: 0,
       homeWalks: 0,
       awayWalks: 0,
-      inningScores: null,
+      inningScores: Prisma.JsonNull,
       lastUpdatedAt: null,
     },
     {
@@ -202,7 +206,7 @@ async function main() {
       awayErrors: 0,
       homeWalks: 0,
       awayWalks: 0,
-      inningScores: null,
+      inningScores: Prisma.JsonNull,
       lastUpdatedAt: null,
     },
     {
@@ -222,7 +226,7 @@ async function main() {
       awayErrors: 0,
       homeWalks: 0,
       awayWalks: 0,
-      inningScores: null,
+      inningScores: Prisma.JsonNull,
       lastUpdatedAt: null,
     },
   ];
