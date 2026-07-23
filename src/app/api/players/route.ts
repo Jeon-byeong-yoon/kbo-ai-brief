@@ -1,35 +1,57 @@
-import { NextResponse } from 'next/server';
-import { PitcherLeader, BatterLeader } from '@/types/kbo';
+import { NextRequest, NextResponse } from 'next/server';
+import { fetchLivePlayerData } from '@/lib/player-data';
 
-export async function GET() {
+const clampInteger = (value: string | null, fallback: number, min: number, max: number) => {
+  const parsed = Number.parseInt(value ?? '', 10);
+  return Number.isFinite(parsed) ? Math.min(max, Math.max(min, parsed)) : fallback;
+};
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+  const limit = clampInteger(searchParams.get('limit'), 50, 1, 50);
+  const offset = clampInteger(searchParams.get('offset'), 0, 0, 49);
+  const type = searchParams.get('type');
+
+  if (type && type !== 'pitcher' && type !== 'batter') {
+    return NextResponse.json(
+      { success: false, error: 'type은 pitcher 또는 batter여야 합니다.' },
+      { status: 400 }
+    );
+  }
+
   try {
-    // 실제 KBO 네이버 스포츠 기록실 기준 투수 TOP 5 랭킹
-    const realPitcherLeaders: PitcherLeader[] = [
-      { rank: 1, name: '양현종', team: 'KIA', era: 2.34, wins: 10, losses: 3, saves: 0, strikeouts: 112, whip: 1.05, war: 4.85 },
-      { rank: 2, name: '류현진', team: '한화', era: 2.58, wins: 9, losses: 4, saves: 0, strikeouts: 105, whip: 1.10, war: 4.32 },
-      { rank: 3, name: '원태인', team: '삼성', era: 2.85, wins: 10, losses: 5, saves: 0, strikeouts: 98, whip: 1.15, war: 3.95 },
-      { rank: 4, name: '김광현', team: 'SSG', era: 2.92, wins: 8, losses: 5, saves: 0, strikeouts: 92, whip: 1.18, war: 3.65 },
-      { rank: 5, name: '곽빈', team: '두산', era: 3.12, wins: 8, losses: 6, saves: 0, strikeouts: 101, whip: 1.22, war: 3.40 },
-    ];
-
-    // 실제 KBO 네이버 스포츠 기록실 기준 타자 TOP 5 랭킹
-    const realBatterLeaders: BatterLeader[] = [
-      { rank: 1, name: '김도영', team: 'KIA', avg: 0.348, homeRuns: 38, rbi: 109, ops: 1.067, war: 8.32 },
-      { rank: 2, name: '구자욱', team: '삼성', avg: 0.343, homeRuns: 33, rbi: 115, ops: 1.044, war: 6.88 },
-      { rank: 3, name: '노시환', team: '한화', avg: 0.315, homeRuns: 31, rbi: 101, ops: 0.942, war: 5.52 },
-      { rank: 4, name: '최정', team: 'SSG', avg: 0.298, homeRuns: 37, rbi: 107, ops: 0.978, war: 5.15 },
-      { rank: 5, name: '박해민', team: 'LG', avg: 0.312, homeRuns: 8, rbi: 55, ops: 0.845, war: 4.12 },
-    ];
+    const live = await fetchLivePlayerData();
+    const slice = <T,>(players: T[]) => players.slice(offset, offset + limit);
+    const total = type === 'pitcher'
+      ? live.pitchers.length
+      : type === 'batter'
+        ? live.batters.length
+        : Math.max(live.pitchers.length, live.batters.length);
 
     return NextResponse.json({
       success: true,
       data: {
-        pitchers: realPitcherLeaders,
-        batters: realBatterLeaders,
+        pitchers: type === 'batter' ? [] : slice(live.pitchers),
+        batters: type === 'pitcher' ? [] : slice(live.batters),
+        total,
+        limit,
+        offset,
+        hasMore: offset + limit < total,
+        seasonYear: 2026,
+        statsThrough: '2026-07-23',
+        sourceUpdatedAt: live.sourceUpdatedAt,
+        source: 'NAVER_SPORTS',
       },
     });
   } catch (error) {
-    console.error('Error fetching player stats API:', error);
-    return NextResponse.json({ success: false, error: 'Failed to fetch player stats' }, { status: 500 });
+    console.error('Error fetching live KBO player stats:', error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: '실시간 선수 기록을 불러오지 못했습니다.',
+        source: 'NAVER_SPORTS',
+      },
+      { status: 502 }
+    );
   }
 }

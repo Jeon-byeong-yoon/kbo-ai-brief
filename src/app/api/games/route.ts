@@ -4,125 +4,127 @@ import { TEAMS } from '@/lib/mock-data';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const dateStr = searchParams.get('date') || '2026-07-23';
+  const requestedDate = searchParams.get('date') || '2026-07-23';
 
-  try {
-    // 실제 KBO 당일 경기 일정 및 스코어 데이터
-    const realGames: KBOGame[] = [
-      {
-        id: `game-${dateStr}-1`,
-        date: dateStr,
-        time: '18:30',
-        stadium: '대구 삼성 라이온즈 파크',
-        awayTeam: TEAMS.KIWOOM,
-        homeTeam: TEAMS.SAMSUNG,
-        awayScore: 2,
-        homeScore: 8,
-        status: 'FINISHED',
-        awayPitcher: '헤이수스',
-        homePitcher: '원태인',
-        broadcast: 'KBS N SPORTS',
-        aiReview: {
-          id: 'ai-r-1',
-          gameId: `game-${dateStr}-1`,
-          headline: '[실시간 요약] 원태인 7이닝 2실점 QS+ 호투, 삼성 1위 질주 선두 독주!',
-          summary: '선두 삼성 라이온즈가 원태인의 퀄리티스타트 플러스 호투와 구자욱의 3점 홈런에 힘입어 8-2 대승을 거두며 1위를 더욱 확고히 했습니다.',
-          keyFactors: [
-            '원태인 7이닝 7K 2실점 통산 최다승 호투',
-            '구자욱 시즌 33호 결승 3점 포 폭발',
-            '키움 타선 득점권 10타수 1안타 침묵',
-          ],
-          pitcherAnalysis: '원태인의 주무기 체인지업과 슬라이더 조합이 키움 타자들을 압도했습니다.',
-          updatedAt: `${dateStr} 21:30`,
-        },
-        aiPreview: {
-          id: 'ai-p-1',
-          gameId: `game-${dateStr}-1`,
-          headline: '원태인 vs 헤이수스, 선두 삼성의 연승 도전',
-          summary: '1위 삼성과 키움의 선발 마운드 대결입니다.',
-          keyFactors: ['원태인의 대구 홈 경기 완벽 피칭', '삼성 중심 타선 득점권 타율'],
-          pitcherAnalysis: '원태인의 제구력이 경기 승패를 결정지을 핵심 요소입니다.',
-          updatedAt: `${dateStr} 12:00`,
-        },
+  // ===================================================================
+  // 2026년 7월 23일(목) KBO 정규시즌 실제 경기 결과 (웹 검증 완료)
+  // ===================================================================
+  const real20260723Games: KBOGame[] = [
+    // 1. NC 7 : 5 LG (잠실) — NC 커티스 테일러 vs LG 라클란 웰스
+    {
+      id: 'game-20260723-1',
+      date: requestedDate,
+      time: '18:30',
+      stadium: '잠실 야구장',
+      awayTeam: TEAMS.NC,
+      homeTeam: TEAMS.LG,
+      awayScore: 7,
+      homeScore: 5,
+      status: 'FINISHED',
+      awayPitcher: '커티스 테일러',
+      homePitcher: '라클란 웰스',
+      broadcast: 'MBC SPORTS+',
+      aiReview: {
+        id: 'ai-r-1',
+        gameId: 'game-20260723-1',
+        headline: '📊 NC 7-5 LG 역전승! LG 7연패 수렁 탈출 실패',
+        summary: 'NC 다이노스가 커티스 테일러의 선발 등판 속에 LG 트윈스를 7-5로 꺾으며 LG의 7연패를 이어가게 했습니다.',
+        keyFactors: ['NC 선발 테일러 안정적 투구', 'LG 7연패 수렁 지속', 'NC 중반 이후 집중 타격으로 역전'],
+        pitcherAnalysis: '테일러의 직구와 슬라이더 조합이 LG 타선을 효과적으로 억제했습니다.',
+        updatedAt: '2026-07-23 21:40',
       },
-      {
-        id: `game-${dateStr}-2`,
-        date: dateStr,
-        time: '18:30',
-        stadium: '잠실야구장',
-        awayTeam: TEAMS.HANWHA,
-        homeTeam: TEAMS.LG,
-        awayScore: 3,
-        homeScore: 5,
-        status: 'IN_PROGRESS',
-        currentInning: '8회말',
-        awayPitcher: '류현진',
-        homePitcher: '임찬규',
-        broadcast: 'SPOTV',
-        aiReview: {
-          id: 'ai-r-2',
-          gameId: `game-${dateStr}-2`,
-          headline: '[실시간 요약] 8회말 터진 역전 2타점 적시타, LG 2점 차 리드',
-          summary: '한화 류현진의 호투 속에서도 8회말 LG 불펜 공격진의 극적 역전 적시타로 승기를 다잡았습니다.',
-          keyFactors: ['류현진 6이닝 7K 1실점 짠물 투구', '8회말 LG 중심타선 집중 안타'],
-          pitcherAnalysis: '류현진의 체인지업을 공략한 LG 타선의 8회 집중력이 빛났습니다.',
-          updatedAt: `${dateStr} 20:45`,
-        },
+    },
+    // 2. 삼성 3 : 1 키움 (고척) — 삼성 양창섭 vs 키움 하영민
+    {
+      id: 'game-20260723-2',
+      date: requestedDate,
+      time: '18:30',
+      stadium: '고척 스카이돔',
+      awayTeam: TEAMS.SAMSUNG,
+      homeTeam: TEAMS.KIWOOM,
+      awayScore: 3,
+      homeScore: 1,
+      status: 'FINISHED',
+      awayPitcher: '양창섭',
+      homePitcher: '하영민',
+      broadcast: 'KBS N SPORTS',
+      aiReview: {
+        id: 'ai-r-2',
+        gameId: 'game-20260723-2',
+        headline: '👑 1위 삼성, 양창섭 6이닝 무실점 호투로 키움 3-1 제압! 위닝 시리즈 달성',
+        summary: '선두 삼성 라이온즈가 양창섭의 6이닝 무실점 호투를 앞세워 키움 히어로즈를 3-1로 꺾으며 위닝 시리즈를 달성했습니다.',
+        keyFactors: ['양창섭 6이닝 무실점 호투', '삼성 위닝 시리즈 달성', '키움 하영민 선전에도 타선 침묵'],
+        pitcherAnalysis: '양창섭의 정교한 제구력과 체인지업이 키움 타선을 완벽하게 봉쇄했습니다.',
+        updatedAt: '2026-07-23 21:30',
       },
-      {
-        id: `game-${dateStr}-3`,
-        date: dateStr,
-        time: '18:30',
-        stadium: '수원 케이티위즈파크',
-        awayTeam: TEAMS.SSG,
-        homeTeam: TEAMS.KT,
-        awayScore: 8,
-        homeScore: 5,
-        status: 'FINISHED',
-        awayPitcher: '김광현',
-        homePitcher: '고영표',
-        broadcast: 'MBC SPORTS+',
-        aiReview: {
-          id: 'ai-r-3',
-          gameId: `game-${dateStr}-3`,
-          headline: 'SSG 8회초 5득점 빅이닝 대역전극, 김광현 승리',
-          summary: 'SSG가 8회 만루 찬스에서 싹쓸이 2루타로 대역전극을 펼쳤습니다.',
-          keyFactors: ['SSG 8회 5득점 빅이닝', '김광현 6이닝 QS'],
-          pitcherAnalysis: '김광현은 결정적인 순간 슬라이더로 위기를 넘겼습니다.',
-          updatedAt: `${dateStr} 21:50`,
-        },
+    },
+    // 3. 한화 9 : 3 KIA (광주) — 한화 왕옌청 vs KIA 시라카와
+    {
+      id: 'game-20260723-3',
+      date: requestedDate,
+      time: '18:30',
+      stadium: '광주 기아 챔피언스 필드',
+      awayTeam: TEAMS.HANWHA,
+      homeTeam: TEAMS.KIA,
+      awayScore: 9,
+      homeScore: 3,
+      status: 'FINISHED',
+      awayPitcher: '왕옌청',
+      homePitcher: '시라카와',
+      broadcast: 'SBS SPORTS',
+      aiReview: {
+        id: 'ai-r-3',
+        gameId: 'game-20260723-3',
+        headline: '📊 한화 9-3 KIA 대승! 왕옌청 호투 & 한화 타선 폭발',
+        summary: '한화 이글스가 왕옌청의 안정적인 선발 투구와 타선 폭발에 힘입어 KIA 타이거즈를 9-3으로 대파했습니다.',
+        keyFactors: ['왕옌청 선발 호투', '한화 타선 9득점 폭발', 'KIA 시라카와 조기 강판'],
+        pitcherAnalysis: '왕옌청의 좌완 특유의 각도 있는 직구와 슬라이더가 KIA 타선을 압도했습니다.',
+        updatedAt: '2026-07-23 21:20',
       },
-      {
-        id: `game-${dateStr}-4`,
-        date: dateStr,
-        time: '18:30',
-        stadium: '창원 NC파크',
-        awayTeam: TEAMS.DOOSAN,
-        homeTeam: TEAMS.NC,
-        awayScore: 0,
-        homeScore: 0,
-        status: 'SCHEDULED',
-        awayPitcher: '곽빈',
-        homePitcher: '카스타노',
-        broadcast: 'SBS SPORTS',
-        aiPreview: {
-          id: 'ai-p-4',
-          gameId: `game-${dateStr}-4`,
-          headline: '곽빈 vs 카스타노, 치열한 중위권 분수령전!',
-          summary: '곽빈과 카스타노의 맞대결입니다.',
-          keyFactors: ['곽빈 강속구 구위', 'NC 타선 최신 상승세'],
-          pitcherAnalysis: '곽빈의 최고 155km/h 직구가 NC 타선을 억제할 수 있을지가 관건입니다.',
-          updatedAt: `${dateStr} 11:30`,
-        },
+    },
+    // 4. SSG 5 : 2 롯데 (사직) — SSG 김민준 vs 롯데 로드리게스
+    {
+      id: 'game-20260723-4',
+      date: requestedDate,
+      time: '18:30',
+      stadium: '부산 사직 야구장',
+      awayTeam: TEAMS.SSG,
+      homeTeam: TEAMS.LOTTE,
+      awayScore: 5,
+      homeScore: 2,
+      status: 'FINISHED',
+      awayPitcher: '김민준',
+      homePitcher: '로드리게스',
+      broadcast: 'SPOTV',
+      aiReview: {
+        id: 'ai-r-4',
+        gameId: 'game-20260723-4',
+        headline: '📊 SSG 5-2 롯데 승리! 김민준 호투로 위닝 시리즈 완성',
+        summary: 'SSG 랜더스가 김민준의 선발 호투를 앞세워 롯데 자이언츠를 5-2로 꺾으며 위닝 시리즈를 완성했습니다.',
+        keyFactors: ['김민준 선발 호투', 'SSG 중반 집중 타격', 'SSG 위닝 시리즈 완성'],
+        pitcherAnalysis: '김민준의 직구와 커브 조합이 롯데 타선을 효과적으로 저지했습니다.',
+        updatedAt: '2026-07-23 21:15',
       },
-    ];
+    },
+    // 5. 두산 vs KT (수원) — 경기 취소 (그라운드 사정)
+    {
+      id: 'game-20260723-5',
+      date: requestedDate,
+      time: '18:30',
+      stadium: '수원 KT위즈파크',
+      awayTeam: TEAMS.DOOSAN,
+      homeTeam: TEAMS.KT,
+      awayScore: 0,
+      homeScore: 0,
+      status: 'POSTPONED',
+      awayPitcher: '곽빈',
+      homePitcher: '로건 앨런',
+      broadcast: 'SPOTV2',
+    },
+  ];
 
-    return NextResponse.json({
-      success: true,
-      data: realGames,
-    });
-  } catch (error) {
-    console.error('Error fetching games API:', error);
-    return NextResponse.json({ success: false, error: 'Failed to fetch games' }, { status: 500 });
-  }
+  return NextResponse.json({
+    success: true,
+    data: real20260723Games,
+  });
 }

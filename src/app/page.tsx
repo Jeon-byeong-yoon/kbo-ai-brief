@@ -6,6 +6,7 @@ import { MatchCard } from '@/components/MatchCard';
 import { StandingsTable } from '@/components/StandingsTable';
 import { PlayerLeaderboard } from '@/components/PlayerLeaderboard';
 import { HistoricalStandings } from '@/components/HistoricalStandings';
+import { PlayerSearch } from '@/components/PlayerSearch';
 import { AIBriefModal } from '@/components/AIBriefModal';
 import {
   KBOGame,
@@ -37,7 +38,9 @@ export default function HomePage() {
   };
 
   // Right Sidebar Tab State
-  const [rightSidebarTab, setRightSidebarTab] = useState<'TEAM_STANDINGS' | 'PLAYER_LEADERS' | 'HISTORICAL_2025'>('TEAM_STANDINGS');
+  const [rightSidebarTab, setRightSidebarTab] = useState<
+    'TEAM_STANDINGS' | 'PLAYER_LEADERS' | 'HISTORICAL_2025' | 'PLAYER_SEARCH'
+  >('TEAM_STANDINGS');
 
   // Real API Data States
   const [gamesState, setGamesState] = useState<KBOGame[]>([]);
@@ -190,17 +193,17 @@ export default function HomePage() {
                 </div>
 
                 <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight">
-                  {favoriteTeam !== 'NONE' ? (
+                  {favoriteTeam !== 'NONE' && favoriteTeam !== 'ALL' ? (
                     <span className="flex items-center gap-2">
-                      <span className="text-amber-400">⭐ [{favoriteTeam}]</span>
-                      <span>잠실 라이벌 혈투! 8회말 결승 2타점 적시타</span>
+                      <span className="text-amber-400">⭐ MY팀 [{favoriteTeam}]</span>
+                      <span>NC 7-5 LG · 삼성 3-1 키움 · 한화 9-3 KIA · 두산-KT 우천취소</span>
                     </span>
                   ) : (
-                    'KIA 선두 독주 사수, 잠실에선 8회말 극적 역전 혈투!'
+                    '⚾ NC 7-5 LG (LG 7연패) · 1위 삼성 3-1 키움 · 한화 9-3 KIA 대승 · SSG 5-2 롯데'
                   )}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl">
-                  8회말 2타점 역전 적시타로 리드를 잡은 LG와 7이닝 1실점 호투로 10승을 달성한 KIA 양현종의 활약이 돋보입니다.
+                <p className="text-xs text-slate-300 mt-2 max-w-3xl leading-relaxed">
+                  2026년 7월 23일(목) KBO 정규시즌 실제 경기 결과. 두산 vs KT(수원)는 그라운드 사정으로 취소되었습니다.
                 </p>
               </div>
 
@@ -312,7 +315,7 @@ export default function HomePage() {
             {/* Right Column: Tabbed Standings & Player Stats & Historical (6 cols) */}
             <div className="lg:col-span-6 space-y-4">
               {/* Tab Selector Buttons */}
-              <div className="flex items-center gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 shadow-md">
+              <div className="grid grid-cols-2 gap-1.5 bg-slate-900/90 p-1.5 rounded-2xl border border-slate-800/80 shadow-md sm:grid-cols-4">
                 <button
                   onClick={() => setRightSidebarTab('TEAM_STANDINGS')}
                   className={`flex-1 py-2 rounded-xl text-xs font-bold transition-all text-center ${
@@ -343,6 +346,16 @@ export default function HomePage() {
                 >
                   📜 2025 전년도 성적
                 </button>
+                <button
+                  onClick={() => setRightSidebarTab('PLAYER_SEARCH')}
+                  className={`py-2 rounded-xl text-xs font-bold transition-all text-center ${
+                    rightSidebarTab === 'PLAYER_SEARCH'
+                      ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white shadow-lg'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  🔎 선수 검색
+                </button>
               </div>
 
               {/* Tab Content 1: Team Standings */}
@@ -372,6 +385,8 @@ export default function HomePage() {
                   onTeamSelect={setSelectedTeam}
                 />
               )}
+
+              {rightSidebarTab === 'PLAYER_SEARCH' && <PlayerSearch />}
             </div>
           </div>
         </main>

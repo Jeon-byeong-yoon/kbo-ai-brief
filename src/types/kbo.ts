@@ -1,5 +1,5 @@
 // KBO AI Brief Core Types
-export type GameStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED' | 'POSTPONED';
+export type GameStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED' | 'POSTPONED' | 'CANCELLED';
 
 export interface KBOTeam {
   id: string;
@@ -19,6 +19,43 @@ export interface AIBriefing {
   updatedAt: string;
 }
 
+export interface InningScores {
+  away: (number | string)[]; // 1~9회 점수 (예: [0, 1, 0, 2, 0, 0, 0, 0, 0])
+  home: (number | string)[]; // 1~9회 점수 (예: [1, 0, 0, 0, 0, 0, 2, 2, 'X'])
+}
+
+export interface TeamGameStats {
+  runs: number;
+  hits: number;
+  errors: number;
+  walks: number;
+}
+
+export interface PlayerLineupItem {
+  order: number;
+  position: string;
+  name: string;
+  avg: number;
+  hits: number;
+  rbi: number;
+}
+
+export interface GamePlayerHighlight {
+  id: string;
+  name: string;
+  team: string;
+  teamShortName: string;
+  teamCode: string;
+  position: string;
+  playerType: 'BATTER' | 'PITCHER';
+  summary: string;
+  stats: Array<{
+    label: string;
+    value: string;
+  }>;
+  reason: string;
+}
+
 export interface KBOGame {
   id: string;
   date: string; // 'YYYY-MM-DD'
@@ -35,6 +72,29 @@ export interface KBOGame {
   broadcast?: string;
   aiPreview?: AIBriefing;
   aiReview?: AIBriefing;
+  // 옵션 2 확장 필드
+  inningScores?: InningScores;
+  awayStats?: TeamGameStats;
+  homeStats?: TeamGameStats;
+  headToHeadRecord?: string; // e.g. '7승 4패 (한화 우세)'
+  awayLineup?: PlayerLineupItem[];
+  homeLineup?: PlayerLineupItem[];
+  bestPlayer?: GamePlayerHighlight;
+  worstPlayer?: GamePlayerHighlight;
+}
+
+export interface PlayerSearchResult {
+  id: string;
+  name: string;
+  team: string;
+  teamCode: string;
+  position: string;
+  playerType: 'BATTER' | 'PITCHER';
+  seasonYear: number;
+  stats: Array<{
+    label: string;
+    value: string;
+  }>;
 }
 
 export interface KBOTeamStanding {
