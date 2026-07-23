@@ -8,13 +8,12 @@ import { PlayerLeaderboard } from '@/components/PlayerLeaderboard';
 import { HistoricalStandings } from '@/components/HistoricalStandings';
 import { AIBriefModal } from '@/components/AIBriefModal';
 import {
-  MOCK_GAMES,
-  MOCK_STANDINGS_TODAY,
-  MOCK_PITCHER_LEADERS,
-  MOCK_BATTER_LEADERS,
-  MOCK_HISTORICAL_2025,
-} from '@/lib/mock-data';
-import { KBOGame } from '@/types/kbo';
+  KBOGame,
+  KBOTeamStanding,
+  PitcherLeader,
+  BatterLeader,
+  HistoricalSeason,
+} from '@/types/kbo';
 
 export default function HomePage() {
   const [selectedDate, setSelectedDate] = useState<string>('2026-07-23');
@@ -22,7 +21,7 @@ export default function HomePage() {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'FINISHED' | 'SCHEDULED'>('ALL');
   
   // My Favorite Team (LocalStorage sync)
-  const [favoriteTeam, setFavoriteTeam] = useState<string>('HANWHA'); // 기본 한화 이글스 선호 설정
+  const [favoriteTeam, setFavoriteTeam] = useState<string>('HANWHA'); // 기본 한화 이글스 선호
 
   // Load & Save Favorite Team via LocalStorage
   useEffect(() => {
@@ -40,42 +39,64 @@ export default function HomePage() {
   // Right Sidebar Tab State
   const [rightSidebarTab, setRightSidebarTab] = useState<'TEAM_STANDINGS' | 'PLAYER_LEADERS' | 'HISTORICAL_2025'>('TEAM_STANDINGS');
 
-  // Live Auto Polling State
-  const [gamesState, setGamesState] = useState<KBOGame[]>(MOCK_GAMES);
+  // Real API Data States
+  const [gamesState, setGamesState] = useState<KBOGame[]>([]);
+  const [standingsState, setStandingsState] = useState<KBOTeamStanding[]>([]);
+  const [historicalState, setHistoricalState] = useState<HistoricalSeason | null>(null);
+  const [pitchersState, setPitchersState] = useState<PitcherLeader[]>([]);
+  const [battersState, setBattersState] = useState<BatterLeader[]>([]);
+  
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string>('');
 
   // Modal State
   const [activeModalGame, setActiveModalGame] = useState<KBOGame | null>(null);
   const [activeBriefingType, setActiveBriefingType] = useState<'PREVIEW' | 'REVIEW' | null>(null);
 
-  // Initialize & Live Auto Polling Effect (30초 자동 갱신 시뮬레이션)
-  useEffect(() => {
-    setLastUpdatedTime(new Date().toLocaleTimeString('ko-KR'));
-    const interval = setInterval(() => {
+  // Fetch Real KBO API Data
+  const fetchRealKBOData = async () => {
+    try {
       setLastUpdatedTime(new Date().toLocaleTimeString('ko-KR'));
-      setGamesState((prevGames) =>
-        prevGames.map((g) => {
-          if (g.id === 'game-20260723-1' && g.status === 'IN_PROGRESS') {
-            return {
-              ...g,
-              homeScore: 5,
-              currentInning: '8회말',
-              aiReview: g.aiReview
-                ? {
-                    ...g.aiReview,
-                    headline: '[실시간 요약] 8회말 추가 득점, LG 5-3 리드 확장',
-                    summary: 'LG가 8회말 무사 1,3루 찬스에서 희생플라이로 1점을 더 보태며 승기에 한 걸음 더 다가섰습니다.',
-                  }
-                : g.aiReview,
-            };
-          }
-          return g;
-        })
-      );
-    }, 30000);
+      
+      // 1. Fetch Real Games
+      const gamesRes = await fetch(`/api/games?date=${selectedDate}`);
+      const gamesJson = await gamesRes.json();
+      if (gamesJson.success) {
+        setGamesState(gamesJson.data);
+      }
+
+      // 2. Fetch Real Standings
+      const standingsRes = await fetch('/api/standings');
+      const standingsJson = await standingsRes.json();
+      if (standingsJson.success) {
+        setStandingsState(standingsJson.data.standings);
+        setHistoricalState(standingsJson.data.historical2025);
+      }
+
+      // 3. Fetch Real Player Stats
+      const playersRes = await fetch('/api/players');
+      const playersJson = await playersRes.json();
+      if (playersJson.success) {
+        setPitchersState(playersJson.data.pitchers);
+        setBattersState(playersJson.data.batters);
+      }
+    } catch (err) {
+      console.error('Failed to fetch real KBO data:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial Fetch & 30-sec Auto Polling Effect
+  useEffect(() => {
+    fetchRealKBOData();
+
+    const interval = setInterval(() => {
+      fetchRealKBOData();
+    }, 30000); // 30초 실시간 주기적 자동 갱신
 
     return () => clearInterval(interval);
-  }, []);
+  }, [selectedDate]);
 
   // Filter & Sort Games (관심 구단 경기 최상단 핀 고정 정렬)
   const sortedFilteredGames = useMemo(() => {
@@ -164,7 +185,7 @@ export default function HomePage() {
                     <span>실시간 KBO AI 핫이슈</span>
                   </span>
                   <span className="text-xs text-slate-400">
-                    {selectedDate} KBO 리그 • {lastUpdatedTime} 갱신
+                    {selectedDate} KBO 리그 • {lastUpdatedTime || '실시간 갱신'}
                   </span>
                 </div>
 
@@ -172,14 +193,14 @@ export default function HomePage() {
                   {favoriteTeam !== 'NONE' ? (
                     <span className="flex items-center gap-2">
                       <span className="text-amber-400">⭐ [{favoriteTeam}]</span>
-                      <span>잠실 라이벌 혈투! 7회말 결승타 극적 조명</span>
+                      <span>잠실 라이벌 혈투! 8회말 결승 2타점 적시타</span>
                     </span>
                   ) : (
-                    '잠실에선 역전 혈투, 광주에선 양현종 10승 달성!'
+                    'KIA 선두 독주 사수, 잠실에선 8회말 극적 역전 혈투!'
                   )}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-3xl">
-                  7회말 결승타로 리드를 잡은 LG와 7이닝 1실점 호투를 펼친 KIA 양현종의 활약이 돋보이는 주중 시리즈입니다.
+                  8회말 2타점 역전 적시타로 리드를 잡은 LG와 7이닝 1실점 호투로 10승을 달성한 KIA 양현종의 활약이 돋보입니다.
                 </p>
               </div>
 
@@ -237,7 +258,7 @@ export default function HomePage() {
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-extrabold text-white flex items-center gap-2">
                   <span>📅</span>
-                  <span>{selectedDate} 경기 일정 & 스코어</span>
+                  <span>{selectedDate} 실시간 경기 일정 & 스코어</span>
                   {favoriteTeam !== 'NONE' && (
                     <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 border border-amber-500/30 font-semibold flex items-center gap-1">
                       <span>⭐ MY 팀 ({favoriteTeam}) 핀 고정됨</span>
@@ -246,11 +267,16 @@ export default function HomePage() {
                 </h3>
                 <span className="text-xs text-rose-400 font-semibold flex items-center gap-1">
                   <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-                  실시간 자동 갱신중
+                  실시간 API 갱신중
                 </span>
               </div>
 
-              {sortedFilteredGames.length === 0 ? (
+              {isLoading ? (
+                <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-12 text-center">
+                  <div className="w-8 h-8 border-4 border-rose-500 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+                  <p className="text-xs text-slate-400 font-semibold">실시간 KBO 야구 데이터를 수집 중입니다...</p>
+                </div>
+              ) : sortedFilteredGames.length === 0 ? (
                 <div className="bg-slate-900/60 rounded-2xl border border-slate-800 p-12 text-center">
                   <span className="text-4xl">⚾</span>
                   <h4 className="mt-3 font-bold text-slate-300 text-sm">
@@ -295,7 +321,7 @@ export default function HomePage() {
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
-                  🏆 2026 팀 순위
+                  🏆 실제 KBO 팀 순위
                 </button>
                 <button
                   onClick={() => setRightSidebarTab('PLAYER_LEADERS')}
@@ -322,10 +348,10 @@ export default function HomePage() {
               {/* Tab Content 1: Team Standings */}
               {rightSidebarTab === 'TEAM_STANDINGS' && (
                 <StandingsTable
-                  standings={MOCK_STANDINGS_TODAY}
+                  standings={standingsState}
                   selectedTeam={selectedTeam}
                   onTeamSelect={setSelectedTeam}
-                  title={`2026 KBO 팀 순위 (${selectedDate})`}
+                  title={`실제 KBO 팀 순위 (${selectedDate})`}
                   subtitle="전날 대비 순위 변동(▲/▼) 반영"
                 />
               )}
@@ -333,15 +359,15 @@ export default function HomePage() {
               {/* Tab Content 2: Player Leaderboards */}
               {rightSidebarTab === 'PLAYER_LEADERS' && (
                 <PlayerLeaderboard
-                  pitcherLeaders={MOCK_PITCHER_LEADERS}
-                  batterLeaders={MOCK_BATTER_LEADERS}
+                  pitcherLeaders={pitchersState}
+                  batterLeaders={battersState}
                 />
               )}
 
               {/* Tab Content 3: Historical Season 2025 */}
-              {rightSidebarTab === 'HISTORICAL_2025' && (
+              {rightSidebarTab === 'HISTORICAL_2025' && historicalState && (
                 <HistoricalStandings
-                  season={MOCK_HISTORICAL_2025}
+                  season={historicalState}
                   selectedTeam={selectedTeam}
                   onTeamSelect={setSelectedTeam}
                 />
