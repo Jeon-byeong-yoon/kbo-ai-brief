@@ -1,7 +1,11 @@
 # 📋 KBO AI Brief - 로드맵 & 구현 진행 현황
 
-## 📌 Phase 1: MVP & 실제 KBO 데이터 연동 (완료 ✅)
+## 📌 Phase 1 & 2: MVP, 실시간 KBO 데이터 & OpenAI GPT-4o 연동 (완료 ✅)
 
+- [x] **OpenAI GPT-4o 실시간 AI 야구 분석 브리핑 연동 (`/api/ai-brief`)**
+  - OpenAI SDK 연동 및 GPT-4o `JSON Mode` 프롬프트 엔지니어링
+  - 경기 대진, 선발 투수, 현재 점수 기반 AI 관전 포인트 (Preview) & 경기 요약 (Review) 3초 실시간 생성
+  - 모달 내 GPT-4o 생성 스피너 로딩 및 팝업 UI 표출
 - [x] **실제 KBO 2026 정규시즌 실시간 팀 순위 API 연동**
   - 네이버 스포츠 실시간 API (`https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/2026/teams`) 연동
   - 1위 삼성 라이온즈(54승 34패), 2위 KT(51승 35패), 3위 LG(52승 38패) 등 10개 구단 100% 실제 데이터 반영
@@ -16,11 +20,9 @@
   - 타자 Top 5 (김도영, 구자욱, 노시환, 최정, 박해민)
 - [x] **2025 전년도 성적 및 우승 기록**
   - 전년도 최종 순위 및 포스트시즌 결과 표 표출
-- [x] **AI 브리핑 모달 UI**
-  - AI Match Preview 및 Review 팝업 렌더링
 
 ---
 
-## 📌 Phase 2: OpenAI API 연동 & 파이프라인 고도화 (예정 🚀)
-- [ ] OpenAI GPT-4o API 키 연동 및 실시간 프롬프트 생성 엔드포인트 구축
-- [ ] 데이터베이스(SQLite/Prisma) 영속화 배치 스케줄러 구축
+## 📌 Next Phase: 경기 상세 페이지 (`/games/[id]`) & DB 파이프라인 (진행 예정 🚀)
+- [ ] 경기 상세 페이지 (`/games/[id]`) 및 1~9회 이닝별 점수판 (R/H/E/B 스코어보드) 구현
+- [ ] SQLite / Prisma DB 자동 수집 누적 파이프라인 연동
