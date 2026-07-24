@@ -17,7 +17,7 @@ import {
 } from '@/types/kbo';
 
 export default function HomePage() {
-  const [selectedDate, setSelectedDate] = useState<string>('2026-07-23');
+  const [selectedDate, setSelectedDate] = useState<string>('2026-07-24');
   const [selectedTeam, setSelectedTeam] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'IN_PROGRESS' | 'FINISHED' | 'SCHEDULED'>('ALL');
   
@@ -29,6 +29,19 @@ export default function HomePage() {
     const saved = localStorage.getItem('kbo_favorite_team');
     if (saved) {
       setFavoriteTeam(saved);
+    }
+
+    // 시스템 날짜 감지 및 자동 설정 (2026-07-23 ~ 2026-07-25 범위만 동적 적용, 그 외엔 24일 기본값)
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+    if (formattedDate === '2026-07-23' || formattedDate === '2026-07-24' || formattedDate === '2026-07-25') {
+      setSelectedDate(formattedDate);
+    } else {
+      setSelectedDate('2026-07-24');
     }
   }, []);
 
@@ -196,14 +209,28 @@ export default function HomePage() {
                   {favoriteTeam !== 'NONE' && favoriteTeam !== 'ALL' ? (
                     <span className="flex items-center gap-2">
                       <span className="text-amber-400">⭐ MY팀 [{favoriteTeam}]</span>
-                      <span>NC 7-5 LG · 삼성 3-1 키움 · 한화 9-3 KIA · 두산-KT 우천취소</span>
+                      {selectedDate === '2026-07-23' ? (
+                        <span>NC 7-5 LG · 삼성 3-1 키움 · 한화 9-3 KIA · 두산-KT 우천취소</span>
+                      ) : selectedDate === '2026-07-24' ? (
+                        <span>한화-LG (류현진 vs 임찬규) · 삼성-키움 (코너 vs 하영민) · NC-KIA (하트 vs 양현종)</span>
+                      ) : (
+                        <span>한화-LG (문동주 vs 최원태) · 삼성-키움 (이승현 vs 후라도) · NC-KIA (신민혁 vs 네일)</span>
+                      )}
                     </span>
                   ) : (
-                    '⚾ NC 7-5 LG (LG 7연패) · 1위 삼성 3-1 키움 · 한화 9-3 KIA 대승 · SSG 5-2 롯데'
+                    selectedDate === '2026-07-23'
+                      ? '⚾ NC 7-5 LG (LG 7연패) · 1위 삼성 3-1 키움 · 한화 9-3 KIA 대승 · SSG 5-2 롯데'
+                      : selectedDate === '2026-07-24'
+                      ? '⚾ 한화-LG (류현진 vs 임찬규) · 삼성-키움 (코너 vs 하영민) · NC-KIA (하트 vs 양현종)'
+                      : '⚾ 한화-LG (문동주 vs 최원태) · 삼성-키움 (이승현 vs 후라도) · NC-KIA (신민혁 vs 네일)'
                   )}
                 </h2>
                 <p className="text-xs text-slate-300 mt-2 max-w-3xl leading-relaxed">
-                  2026년 7월 23일(목) KBO 정규시즌 실제 경기 결과. 두산 vs KT(수원)는 그라운드 사정으로 취소되었습니다.
+                  {selectedDate === '2026-07-23'
+                    ? '2026년 7월 23일(목) KBO 정규시즌 실제 경기 결과. 두산 vs KT(수원)는 그라운드 사정으로 취소되었습니다.'
+                    : selectedDate === '2026-07-24'
+                    ? '2026년 7월 24일(금) KBO 정규시즌 경기 일정 및 선발 대진표. 각 매치의 AI 프리뷰를 확인해 보세요.'
+                    : `${selectedDate} KBO 정규시즌 경기 예정 및 AI 예측 정보입니다.`}
                 </p>
               </div>
 
