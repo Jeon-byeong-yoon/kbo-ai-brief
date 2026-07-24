@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface HeaderProps {
   selectedDate: string;
@@ -19,6 +19,42 @@ export const Header: React.FC<HeaderProps> = ({
   favoriteTeam,
   onFavoriteTeamChange,
 }) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 날짜 동적 계산 (2026년 7월이 아닐 경우 테스트를 위해 2026-07-24를 오늘로 고정)
+  let todayDate = new Date();
+  const isTestTime = todayDate.getFullYear() === 2026 && todayDate.getMonth() === 6;
+  if (!isTestTime) {
+    todayDate = new Date('2026-07-24');
+  }
+
+  const formatYYYYMMDD = (d: Date) => {
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  const formatMMDD = (d: Date) => {
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${mm}.${dd}`;
+  };
+
+  const yesterday = new Date(todayDate);
+  yesterday.setDate(todayDate.getDate() - 1);
+  const tomorrow = new Date(todayDate);
+  tomorrow.setDate(todayDate.getDate() + 1);
+
+  const yesterdayStr = formatYYYYMMDD(yesterday);
+  const todayStr = formatYYYYMMDD(todayDate);
+  const tomorrowStr = formatYYYYMMDD(tomorrow);
+
+  const todayLabel = formatMMDD(todayDate);
   return (
     <header className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/85 border-b border-slate-800/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -49,9 +85,9 @@ export const Header: React.FC<HeaderProps> = ({
           <div className="flex items-center gap-2">
             <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 text-sm text-slate-300 shadow-inner">
               <button
-                onClick={() => onDateChange('2026-07-22')}
+                onClick={() => onDateChange(yesterdayStr)}
                 className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  selectedDate === '2026-07-22'
+                  selectedDate === yesterdayStr
                     ? 'bg-slate-800 text-white shadow-sm font-bold'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
@@ -59,19 +95,19 @@ export const Header: React.FC<HeaderProps> = ({
                 어제
               </button>
               <button
-                onClick={() => onDateChange('2026-07-23')}
+                onClick={() => onDateChange(todayStr)}
                 className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  selectedDate === '2026-07-23'
+                  selectedDate === todayStr
                     ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white font-bold shadow-md'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
               >
-                오늘 (07.23)
+                오늘 ({todayLabel})
               </button>
               <button
-                onClick={() => onDateChange('2026-07-24')}
+                onClick={() => onDateChange(tomorrowStr)}
                 className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  selectedDate === '2026-07-24'
+                  selectedDate === tomorrowStr
                     ? 'bg-slate-800 text-white shadow-sm font-bold'
                     : 'text-slate-400 hover:text-slate-200'
                 }`}
