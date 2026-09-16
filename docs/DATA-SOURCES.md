@@ -63,6 +63,12 @@ GET /statistics/categories/kbo/seasons/{year}/teams
 공격/수비 세부 지표 전부. `nextScheduleGameId`, `opposingTeamName` 으로 다음 경기도 온다.
 `teamImageUrl` 로 구단 엠블럼 URL 도 제공한다.
 
+**`ranking` 은 끝난 시즌이면 포스트시즌까지 반영한 최종 순위다.** 응답의
+`gameType` 이 `REGULAR_SEASON` 이어도 그렇다. 2015 시즌을 보면 `ranking` 1 은
+한국시리즈 우승팀 두산(79승 65패)이고, 정규시즌 1위인 삼성(88승 56패)은 2 다.
+정규시즌 순위표를 그릴 때는 `wra`(승률)로 직접 매겨야 한다. `wra` 와 `gameBehind`
+자체는 정규시즌 값이라 정확하다.
+
 ## 선수 기록
 
 ```
@@ -74,8 +80,21 @@ GET /statistics/categories/kbo/seasons/{year}/players?playerType=PITCHER
   빠뜨려도 400 (`지원하지 않는 playerType 입니다`).
 - **2007 시즌부터** 데이터가 있다. 2005 이하는 빈 배열.
 - 시즌별 **상위 50명**만 온다.
+- **규정 타석·이닝 미달 선수는 `ranking` 이 `null` 로 온다.** 이걸 0 으로 바꿔
+  정렬하면 8경기 1안타 타율 1.000 같은 선수가 1위로 올라온다. `isQualified` 로
+  거르거나 `ranking` 이 있는 행만 쓴다.
+- **`pitcherInning` 은 `"138 2/3"` 같은 문자열이다.** `Number()` 로 바꾸면 NaN 이 된다.
+  이닝은 이 분수 표기가 관례이므로 문자열 그대로 쓰는 게 낫다.
+- **WAR 은 오래된 시즌에 없다.** 값이 전부 0 으로 오므로 화면에서 칸을 빼는 게 낫다.
 - `result.seasonPlayerStats[]` 에 `hitterHra`, `hitterWar`, `hitterOps`,
   `pitcherEra`, `pitcherWhip` 등 지표와 **`playerImageUrl`(선수 사진)** 이 들어 있다.
+
+## 과거 구단명
+
+지난 시즌을 조회하면 그 시절 구단명이 그대로 온다 — 2008~2018 은 `넥센`,
+2008~2020 은 `SK`. `teamId` 는 항상 네이버 코드(`WO`, `SK`)로 오지만
+`teamShortName` 은 당시 이름이다. `lib/team-assets.ts` 의 별칭 표에 과거 이름을
+등록해 같은 프랜차이즈의 현재 구단 엠블럼으로 잇는다.
 
 ## 없는 것
 

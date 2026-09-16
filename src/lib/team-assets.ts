@@ -153,6 +153,20 @@ TEAM_CODES.forEach((code) => {
   register(team.name.replace(/\s/g, ''), code);
 });
 
+// 과거 구단명. 기록실에서 지난 시즌을 보면 그 시절 이름으로 온다.
+// 같은 프랜차이즈이므로 현재 구단으로 매핑한다.
+(
+  [
+    ['넥센', 'KIWOOM'],
+    ['우리', 'KIWOOM'],
+    ['서울', 'KIWOOM'],
+    ['히어로즈', 'KIWOOM'],
+    ['SK', 'SSG'],
+    ['와이번스', 'SSG'],
+    ['해태', 'KIA'],
+  ] as const
+).forEach(([alias, code]) => register(alias, code));
+
 // 네이버 스포츠 구단 코드
 (
   [
