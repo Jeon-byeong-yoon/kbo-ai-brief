@@ -2,6 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { KBOGame, AIBriefing } from '../types/kbo';
+import { CloseIcon, SparkIcon } from './ui/Icons';
+import { TeamBadge } from './ui/TeamBadge';
+import { KeyPlayerMatchup } from './game/KeyPlayerMatchup';
+import { GamePreview } from '@/types/preview';
 
 interface AIBriefModalProps {
   game: KBOGame | null;
@@ -9,13 +13,10 @@ interface AIBriefModalProps {
   onClose: () => void;
 }
 
-export const AIBriefModal: React.FC<AIBriefModalProps> = ({
-  game,
-  briefingType,
-  onClose,
-}) => {
+export const AIBriefModal: React.FC<AIBriefModalProps> = ({ game, briefingType, onClose }) => {
   const [briefData, setBriefData] = useState<AIBriefing | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [preview, setPreview] = useState<GamePreview | null>(null);
 
   useEffect(() => {
     if (!game || !briefingType) return;
@@ -23,7 +24,6 @@ export const AIBriefModal: React.FC<AIBriefModalProps> = ({
     let isMounted = true;
     setIsLoading(true);
 
-    // Call OpenAI GPT-4o API Route (/api/ai-brief)
     const fetchAIBrief = async () => {
       try {
         const res = await fetch('/api/ai-brief', {
@@ -46,138 +46,143 @@ export const AIBriefModal: React.FC<AIBriefModalProps> = ({
 
     fetchAIBrief();
 
+    // 키플레이어 비교는 경기 전 정보라 프리뷰에서만 띄운다.
+    setPreview(null);
+    if (briefingType === 'PREVIEW') {
+      fetch(`/api/games/${game.id}/preview`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (isMounted && json.success) setPreview(json.data);
+        })
+        .catch((err) => console.error('Failed to fetch game preview:', err));
+    }
+
     return () => {
       isMounted = false;
     };
   }, [game, briefingType]);
+
+  // 열려 있는 동안 Esc 로 닫고, 뒤 배경이 스크롤되지 않게 한다.
+  useEffect(() => {
+    if (!game || !briefingType) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [game, briefingType, onClose]);
 
   if (!game || !briefingType) return null;
 
   const isPreview = briefingType === 'PREVIEW';
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fadeIn">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-fg/25 p-4 backdrop-blur-sm"
+      onClick={onClose}
+      role="presentation"
+    >
       <div
-        className="relative w-full max-w-2xl bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl overflow-hidden"
+        className="animate-fadeIn relative max-h-[88vh] w-full max-w-[720px] overflow-hidden rounded-[20px] border border-line bg-surface shadow-pop"
         onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={`${game.awayTeam.name} 대 ${game.homeTeam.name} AI ${isPreview ? '프리뷰' : '요약'}`}
       >
-        {/* Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-gradient-to-r from-slate-900 via-slate-900/90 to-indigo-950/80">
-          <div className="flex items-center gap-3">
-            <div
-              className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg font-black ${
-                isPreview
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40'
-                  : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-              }`}
-            >
-              {isPreview ? '🔮' : '📊'}
+        <div className="flex items-start justify-between gap-4 border-b border-hair px-6 py-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="flex items-center gap-1.5 rounded-md bg-accent-soft px-2 py-1 text-2xs font-semibold text-accent">
+                <SparkIcon size={12} />
+                AI {isPreview ? '프리뷰' : '요약'}
+              </span>
+              <span className="tnum text-xs text-fg3">
+                {game.date} · {game.stadium}
+              </span>
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span
-                  className={`text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center gap-1 ${
-                    isPreview
-                      ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                  }`}
-                >
-                  <span>⚡ GPT-4o</span>
-                  <span>{isPreview ? 'KBO AI Match Preview' : 'KBO AI Match Review'}</span>
-                </span>
-                <span className="text-xs text-slate-400">
-                  {game.date} • {game.stadium}
-                </span>
-              </div>
-              <h3 className="text-base font-extrabold text-white mt-1">
-                {game.awayTeam.name} vs {game.homeTeam.name}
+            <div className="mt-2.5 flex items-center gap-2.5">
+              <TeamBadge team={game.awayTeam.code} fallbackLabel={game.awayTeam.shortName} size={30} radius={9} />
+              <h3 className="truncate text-[17px] font-bold tracking-[-0.03em] text-fg">
+                {game.awayTeam.name}
+                <span className="mx-2 text-sm font-medium text-fg3">vs</span>
+                {game.homeTeam.name}
               </h3>
+              <TeamBadge team={game.homeTeam.code} fallbackLabel={game.homeTeam.shortName} size={30} radius={9} />
             </div>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition-all"
+            aria-label="닫기"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-surface2 text-fg2 transition-colors hover:text-fg"
           >
-            ✕
+            <CloseIcon />
           </button>
         </div>
 
-        {/* Content Body */}
         {isLoading ? (
-          <div className="p-16 text-center space-y-4">
-            <div className="relative w-12 h-12 mx-auto">
-              <div className="w-12 h-12 border-4 border-amber-500/20 border-t-amber-400 rounded-full animate-spin" />
-              <div className="absolute inset-0 flex items-center justify-center text-sm">🤖</div>
-            </div>
+          <div className="space-y-4 px-6 py-16 text-center">
+            <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-line border-t-accent" />
             <div>
-              <h4 className="text-sm font-bold text-slate-200">
-                GPT-4o 야구 전문 AI가 실시간 분석 브리핑을 생성하고 있습니다...
-              </h4>
-              <p className="text-xs text-slate-500 mt-1">
-                선발 투수 기록, 상대 전적, 최근 타선 기세를 딥러닝 분석 중입니다.
-              </p>
+              <h4 className="text-sm font-semibold text-fg">AI가 경기 브리핑을 쓰고 있습니다</h4>
+              <p className="mt-1 text-xs text-fg3">선발 투수 기록, 상대 전적, 최근 타선 흐름을 확인하는 중입니다.</p>
             </div>
           </div>
         ) : briefData ? (
-          <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto custom-scrollbar">
-            {/* Headline */}
-            <div className="bg-slate-950/60 rounded-2xl p-4 border border-slate-800/80">
-              <h4 className="text-sm font-black text-amber-300 leading-snug">
+          <div className="custom-scrollbar max-h-[62vh] space-y-6 overflow-y-auto px-6 py-6">
+            <div>
+              <h4 className="text-[17px] font-bold leading-snug tracking-[-0.03em] text-fg">
                 {briefData.headline}
               </h4>
-              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+              <p className="mt-2 text-[13.5px] leading-relaxed tracking-[-0.01em] text-fg2">
                 {briefData.summary}
               </p>
             </div>
 
-            {/* Key Factors Bullet Points */}
+            {preview && <KeyPlayerMatchup preview={preview} />}
+
             <div>
-              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
-                <span>🎯</span>
-                <span>{isPreview ? 'AI 핵심 관전 포인트' : '경기 승패 결정적 요인'}</span>
+              <h5 className="mb-2.5 text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
+                {isPreview ? '관전 포인트' : '승패를 가른 요인'}
               </h5>
-              <ul className="space-y-2.5">
+              <ul className="space-y-2">
                 {briefData.keyFactors.map((factor, idx) => (
                   <li
                     key={idx}
-                    className="flex items-start gap-2 text-xs text-slate-200 bg-slate-900/60 p-3 rounded-xl border border-slate-800/50"
+                    className="flex items-start gap-2.5 rounded-control bg-surface2 px-3.5 py-3 text-[13px] leading-relaxed text-fg"
                   >
-                    <span className="w-5 h-5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center font-bold text-[10px] shrink-0">
-                      {idx + 1}
-                    </span>
-                    <span className="leading-relaxed">{factor}</span>
+                    <span className="tnum mt-[1px] shrink-0 text-2xs font-bold text-fg3">{idx + 1}</span>
+                    <span>{factor}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* Pitcher Matchup Details */}
-            <div className="bg-gradient-to-r from-slate-950 to-indigo-950/40 rounded-2xl p-4 border border-slate-800">
-              <h5 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <span>⚾</span>
-                <span>선발 투수 매치업 심층 분석</span>
+            <div>
+              <h5 className="mb-2.5 text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
+                선발 매치업
               </h5>
-              <p className="text-xs text-slate-300 leading-relaxed">
+              <p className="rounded-control border border-line px-3.5 py-3 text-[13px] leading-relaxed text-fg2">
                 {briefData.pitcherAnalysis}
               </p>
             </div>
           </div>
         ) : (
-          <div className="p-12 text-center text-slate-400 text-xs">
-            AI 리포트를 불러오는데 실패했습니다. 다시 시도해 주세요.
+          <div className="px-6 py-12 text-center text-[13px] text-fg2">
+            AI 리포트를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
           </div>
         )}
 
-        {/* Modal Footer */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between">
-          <span className="text-[11px] text-slate-500 flex items-center gap-1">
-            <span>✨</span>
-            <span>OpenAI GPT-4o 야구 분석 데이터 파이프라인 실시간 작동중</span>
-          </span>
+        <div className="flex items-center justify-between gap-3 border-t border-hair px-6 py-4">
+          <span className="text-2xs text-fg3">OpenAI 기반 자동 생성 · 기록은 네이버 스포츠 기준</span>
           <button
             onClick={onClose}
-            className="px-4 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 transition-all"
+            className="rounded-[9px] bg-surface2 px-4 py-2 text-[12.5px] font-semibold text-fg transition-colors hover:bg-track"
           >
             닫기
           </button>

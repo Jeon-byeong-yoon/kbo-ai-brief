@@ -163,7 +163,9 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
         { label: '타점', value: String(player.hitterRbi ?? 0) },
         { label: '도루', value: String(player.hitterSb ?? 0) },
         { label: '출루율', value: formatAverage(player.hitterObp) },
+        { label: '장타율', value: formatAverage(player.hitterSlg) },
         { label: 'OPS', value: formatDecimal(player.hitterOps, 3) },
+        { label: 'WAR', value: formatDecimal(player.hitterWar, 2) },
       ],
     })),
     ...rawPitchers.map((player) => ({
@@ -181,8 +183,10 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
         { label: '승', value: String(player.pitcherWin ?? 0) },
         { label: '패', value: String(player.pitcherLose ?? 0) },
         { label: '세이브', value: String(player.pitcherSave ?? 0) },
+        { label: '홀드', value: String(player.pitcherHold ?? 0) },
         { label: '탈삼진', value: String(player.pitcherKk ?? 0) },
         { label: 'WHIP', value: formatDecimal(player.pitcherWhip) },
+        { label: 'WAR', value: formatDecimal(player.pitcherWar, 2) },
       ],
     })),
   ];

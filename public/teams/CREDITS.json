@@ -1,0 +1,98 @@
+{
+  "what": "각 구단이 현재 사용하는 공식 엠블럼.",
+  "verifiedAgainst": "KBO 공식 사이트(koreabaseball.com)가 서빙하는 emblem/regular/<채택연도>/<구단코드>.png 와 도안이 동일함을 확인했다. KBO 쪽은 81x59 로 작아서, 같은 도안을 200x200 으로 제공하는 네이버 스포츠 CDN 파일을 받았다.",
+  "fetchedOn": "2026-09-16",
+  "license": "퍼블릭 도메인이 아니다. 각 구단이 보유한 등록상표이며 저작물이다. 경기 정보를 제공하며 구단을 지칭하는 용도의 비상업적 사용을 전제로 넣었다.",
+  "files": [
+    {
+      "file": "lg.png",
+      "team": "LG 트윈스",
+      "kboCode": "LG",
+      "emblemAdopted": 2022,
+      "bytes": 18866,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/LG.png?type=f200_200"
+    },
+    {
+      "file": "doosan.png",
+      "team": "두산 베어스",
+      "kboCode": "OB",
+      "emblemAdopted": 2025,
+      "bytes": 33379,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/OB.png?type=f200_200"
+    },
+    {
+      "file": "kt.png",
+      "team": "KT 위즈",
+      "kboCode": "KT",
+      "emblemAdopted": 2022,
+      "bytes": 22359,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/KT.png?type=f200_200"
+    },
+    {
+      "file": "ssg.png",
+      "team": "SSG 랜더스",
+      "kboCode": "SK",
+      "bytes": 29502,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/SK.png?type=f200_200",
+      "emblemAdopted": 2024
+    },
+    {
+      "file": "nc.png",
+      "team": "NC 다이노스",
+      "kboCode": "NC",
+      "emblemAdopted": 2022,
+      "bytes": 33280,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/NC.png?type=f200_200"
+    },
+    {
+      "file": "kiwoom.png",
+      "team": "키움 히어로즈",
+      "kboCode": "WO",
+      "emblemAdopted": 2022,
+      "bytes": 36204,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/WO.png?type=f200_200"
+    },
+    {
+      "file": "hanwha.png",
+      "team": "한화 이글스",
+      "kboCode": "HH",
+      "emblemAdopted": 2025,
+      "bytes": 31606,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/HH.png?type=f200_200"
+    },
+    {
+      "file": "lotte.png",
+      "team": "롯데 자이언츠",
+      "kboCode": "LT",
+      "emblemAdopted": 2022,
+      "bytes": 31468,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/LT.png?type=f200_200"
+    },
+    {
+      "file": "samsung.png",
+      "team": "삼성 라이온즈",
+      "kboCode": "SS",
+      "emblemAdopted": 2022,
+      "bytes": 34512,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/SS.png?type=f200_200"
+    },
+    {
+      "file": "kia.png",
+      "team": "KIA 타이거즈",
+      "kboCode": "HT",
+      "emblemAdopted": 2022,
+      "bytes": 26722,
+      "size": "200x200",
+      "source": "https://sports-phinf.pstatic.net/team/kbo/default/HT.png?type=f200_200"
+    }
+  ]
+}

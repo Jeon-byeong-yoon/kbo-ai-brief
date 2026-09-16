@@ -1,143 +1,77 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { ThemeToggle } from './ThemeToggle';
+import { BallIcon, ChevronDownIcon } from './ui/Icons';
+import { TEAM_CODES, TEAM_ASSETS } from '@/lib/team-assets';
 
 interface HeaderProps {
-  selectedDate: string;
-  onDateChange: (date: string) => void;
-  selectedTeam: string;
-  onTeamSelect: (teamCode: string) => void;
   favoriteTeam: string;
   onFavoriteTeamChange: (teamCode: string) => void;
 }
 
-export const Header: React.FC<HeaderProps> = ({
-  selectedDate,
-  onDateChange,
-  selectedTeam,
-  onTeamSelect,
-  favoriteTeam,
-  onFavoriteTeamChange,
-}) => {
-  const [mounted, setMounted] = useState(false);
+const NAV = [
+  { href: '/', label: '대시보드' },
+  { href: '/records', label: '기록실' },
+];
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+export const Header: React.FC<HeaderProps> = ({ favoriteTeam, onFavoriteTeamChange }) => {
+  const pathname = usePathname();
+  const favoriteLabel =
+    favoriteTeam === 'NONE' ? '없음' : (TEAM_ASSETS[favoriteTeam as keyof typeof TEAM_ASSETS]?.name ?? '없음');
 
-  // 날짜 동적 계산 (2026년 7월이 아닐 경우 테스트를 위해 2026-07-24를 오늘로 고정)
-  let todayDate = new Date();
-  const isTestTime = todayDate.getFullYear() === 2026 && todayDate.getMonth() === 6;
-  if (!isTestTime) {
-    todayDate = new Date('2026-07-24');
-  }
-
-  const formatYYYYMMDD = (d: Date) => {
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  };
-
-  const formatMMDD = (d: Date) => {
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    return `${mm}.${dd}`;
-  };
-
-  const yesterday = new Date(todayDate);
-  yesterday.setDate(todayDate.getDate() - 1);
-  const tomorrow = new Date(todayDate);
-  tomorrow.setDate(todayDate.getDate() + 1);
-
-  const yesterdayStr = formatYYYYMMDD(yesterday);
-  const todayStr = formatYYYYMMDD(todayDate);
-  const tomorrowStr = formatYYYYMMDD(tomorrow);
-
-  const todayLabel = formatMMDD(todayDate);
   return (
-    <header className="sticky top-0 z-40 backdrop-blur-xl bg-slate-950/85 border-b border-slate-800/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16 gap-2">
-          {/* Logo & Brand */}
-          <div className="flex items-center gap-3 shrink-0">
-            <div className="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-rose-600 to-indigo-600 shadow-lg shadow-rose-500/20">
-              <span className="text-xl">⚾</span>
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-400 rounded-full animate-ping" />
-              <div className="absolute -top-1 -right-1 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-950" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg font-black tracking-tight text-white">
-                  KBO <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-rose-400 to-indigo-400">AI BRIEF</span>
-                </h1>
-                <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/30 rounded">
-                  LIVE
-                </span>
-              </div>
-              <p className="text-xs text-slate-400 hidden sm:block">
-                AI 관전 포인트 & 실시간 KBO 브리핑
-              </p>
-            </div>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-xl backdrop-saturate-150">
+      <div className="mx-auto flex h-[60px] max-w-shell items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+        <div className="flex min-w-0 shrink items-center gap-2.5">
+          <BallIcon size={24} className="shrink-0 text-fg" />
+          <Link href="/" className="truncate text-[16.5px] font-bold tracking-[-0.03em] text-fg">
+            KBO AI Brief
+          </Link>
 
-          {/* Date Selector */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center bg-slate-900 border border-slate-800 rounded-xl p-1 text-sm text-slate-300 shadow-inner">
-              <button
-                onClick={() => onDateChange(yesterdayStr)}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  selectedDate === yesterdayStr
-                    ? 'bg-slate-800 text-white shadow-sm font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                어제
-              </button>
-              <button
-                onClick={() => onDateChange(todayStr)}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  selectedDate === todayStr
-                    ? 'bg-gradient-to-r from-rose-600 to-indigo-600 text-white font-bold shadow-md'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                오늘 ({todayLabel})
-              </button>
-              <button
-                onClick={() => onDateChange(tomorrowStr)}
-                className={`px-2.5 sm:px-3 py-1 rounded-lg text-xs font-medium transition-all ${
-                  selectedDate === tomorrowStr
-                    ? 'bg-slate-800 text-white shadow-sm font-bold'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                내일
-              </button>
-            </div>
+          <nav className="ml-2 hidden gap-0.5 sm:flex">
+            {NAV.map((item) => {
+              const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={`rounded-chip px-2.5 py-1.5 text-[13px] transition-colors ${
+                    active ? 'bg-surface2 font-semibold text-fg' : 'font-medium text-fg2 hover:text-fg'
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
 
-            {/* Favorite Team Selector (⭐ MY TEAM Pinning) */}
-            <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 rounded-xl px-2.5 py-1 text-xs">
-              <span className="text-amber-400 font-bold shrink-0">⭐ MY 팀:</span>
-              <select
-                value={favoriteTeam}
-                onChange={(e) => onFavoriteTeamChange(e.target.value)}
-                className="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer text-xs"
-              >
-                <option value="NONE" className="bg-slate-900 text-slate-300">없음</option>
-                <option value="LG" className="bg-slate-900 text-rose-400">LG 트윈스</option>
-                <option value="HANWHA" className="bg-slate-900 text-orange-400">한화 이글스</option>
-                <option value="KIA" className="bg-slate-900 text-red-400">KIA 타이거즈</option>
-                <option value="SAMSUNG" className="bg-slate-900 text-blue-400">삼성 라이온즈</option>
-                <option value="DOOSAN" className="bg-slate-900 text-sky-400">두산 베어스</option>
-                <option value="KT" className="bg-slate-900 text-zinc-300">KT 위즈</option>
-                <option value="SSG" className="bg-slate-900 text-emerald-400">SSG 랜더스</option>
-                <option value="LOTTE" className="bg-slate-900 text-indigo-400">롯데 자이언츠</option>
-                <option value="NC" className="bg-slate-900 text-cyan-400">NC 다이노스</option>
-                <option value="KIWOOM" className="bg-slate-900 text-fuchsia-400">키움 히어로즈</option>
-              </select>
-            </div>
-          </div>
+        <div className="flex shrink-0 items-center gap-2.5">
+          <label className="relative flex h-[34px] items-center gap-1.5 rounded-control border border-line bg-surface pl-3 pr-2.5">
+            <span className="text-2xs font-semibold tracking-wide text-fg3">MY</span>
+            <span className="max-w-[92px] truncate text-[13px] font-semibold tracking-[-0.01em] text-fg">
+              {favoriteLabel}
+            </span>
+            <ChevronDownIcon className="text-fg3" />
+            <select
+              value={favoriteTeam}
+              onChange={(e) => onFavoriteTeamChange(e.target.value)}
+              aria-label="관심 구단"
+              className="absolute inset-0 cursor-pointer opacity-0"
+            >
+              <option value="NONE">없음</option>
+              {TEAM_CODES.map((code) => (
+                <option key={code} value={code}>
+                  {TEAM_ASSETS[code].name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <ThemeToggle />
         </div>
       </div>
     </header>

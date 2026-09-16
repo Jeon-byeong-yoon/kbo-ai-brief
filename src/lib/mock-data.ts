@@ -175,7 +175,7 @@ export const MOCK_HISTORICAL_2025: HistoricalSeason = {
   year: 2025,
   champion: 'KIA 타이거즈',
   teams: [
-    { rank: 1, name: 'KIA 타이거즈', code: 'KIA', gamesPlayed: 144, wins: 87, losses: 55, draws: 2, winRate: 0.613, postseasonResult: '한국시리즈 우승 🏆' },
+    { rank: 1, name: 'KIA 타이거즈', code: 'KIA', gamesPlayed: 144, wins: 87, losses: 55, draws: 2, winRate: 0.613, postseasonResult: '한국시리즈 우승' },
     { rank: 2, name: '삼성 라이온즈', code: 'SAMSUNG', gamesPlayed: 144, wins: 78, losses: 64, draws: 2, winRate: 0.549, postseasonResult: '한국시리즈 준우승' },
     { rank: 3, name: 'LG 트윈스', code: 'LG', gamesPlayed: 144, wins: 76, losses: 66, draws: 2, winRate: 0.535, postseasonResult: '플레이오프 탈락' },
     { rank: 4, name: '두산 베어스', code: 'DOOSAN', gamesPlayed: 144, wins: 74, losses: 68, draws: 2, winRate: 0.521, postseasonResult: '준플레이오프 탈락' },

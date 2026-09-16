@@ -2,6 +2,8 @@
 
 import { KeyboardEvent, useEffect, useState } from 'react';
 import { PlayerSearchResult } from '@/types/kbo';
+import { TeamBadge } from './ui/TeamBadge';
+import { SearchIcon } from './ui/Icons';
 
 export function PlayerSearch() {
   const [query, setQuery] = useState('');
@@ -69,17 +71,17 @@ export function PlayerSearch() {
   };
 
   return (
-    <section className="rounded-2xl border border-slate-800/80 bg-slate-900/80 p-5 shadow-lg">
+    <section className="rounded-card border border-line bg-surface px-5 pb-5 pt-4 shadow-card">
       <div>
-        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-indigo-400">Player Finder</p>
-        <h2 className="mt-1 text-base font-black text-white">1군 선수 검색</h2>
-        <p className="mt-1 text-xs text-slate-500">
-          선수 이름을 입력해 2026 시즌 누적 기록을 확인하세요.
-        </p>
+        <h2 className="text-[15px] font-bold tracking-[-0.025em] text-fg">선수 검색</h2>
+        <p className="mt-0.5 text-xs text-fg3">이름을 입력해 2026 시즌 기록을 확인하세요.</p>
       </div>
 
-      <div className="relative mt-4">
-        <label htmlFor="player-search" className="sr-only">선수 이름</label>
+      <div className="relative mt-3.5">
+        <label htmlFor="player-search" className="sr-only">
+          선수 이름
+        </label>
+        <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-fg3" />
         <input
           id="player-search"
           value={query}
@@ -90,79 +92,80 @@ export function PlayerSearch() {
           onKeyDown={handleKeyDown}
           autoComplete="off"
           placeholder="예: 구자욱, 류현진"
-          className="w-full rounded-xl border border-slate-700 bg-slate-950 px-4 py-3 pr-10 text-sm font-semibold text-white outline-none transition focus:border-indigo-500"
+          className="w-full rounded-control border border-line bg-surface2 py-3 pl-10 pr-10 text-[13.5px] font-medium text-fg outline-none transition-colors placeholder:text-fg3 focus:border-accent focus:bg-surface"
           role="combobox"
           aria-expanded={results.length > 0}
           aria-controls="player-search-results"
         />
-        <span className="pointer-events-none absolute right-3 top-3 text-slate-500">
-          {isLoading ? '···' : '⌕'}
-        </span>
+        {isLoading && (
+          <span className="absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin rounded-full border-2 border-line border-t-accent" />
+        )}
 
         {query.trim() && !isLoading && (results.length > 0 || error) && (
           <div
             id="player-search-results"
-            className="absolute z-20 mt-2 w-full overflow-hidden rounded-xl border border-slate-700 bg-slate-950 shadow-2xl"
+            className="absolute z-20 mt-2 w-full overflow-hidden rounded-control border border-line bg-surface shadow-pop"
           >
             {error ? (
-              <p className="px-4 py-3 text-xs text-rose-300">{error}</p>
-            ) : results.map((player, index) => (
-              <button
-                key={player.id}
-                type="button"
-                onClick={() => choose(player)}
-                className={`flex w-full items-center justify-between px-4 py-3 text-left text-xs transition ${
-                  index === activeIndex ? 'bg-indigo-500/20' : 'hover:bg-slate-800'
-                }`}
-              >
-                <span>
-                  <strong className="text-sm text-white">{player.name}</strong>
-                  <span className="ml-2 text-slate-500">{player.position}</span>
-                </span>
-                <span className="font-semibold text-slate-400">{player.team}</span>
-              </button>
-            ))}
+              <p className="px-4 py-3 text-xs text-live">{error}</p>
+            ) : (
+              results.map((player, index) => (
+                <button
+                  key={player.id}
+                  type="button"
+                  onClick={() => choose(player)}
+                  className={`flex w-full items-center justify-between gap-3 px-3.5 py-2.5 text-left transition-colors ${
+                    index === activeIndex ? 'bg-surface2' : 'hover:bg-surface2'
+                  }`}
+                >
+                  <span className="flex min-w-0 items-center gap-2.5">
+                    <TeamBadge team={player.team} fallbackLabel={player.team} size={24} radius={7} />
+                    <span className="truncate text-[13px] font-semibold text-fg">{player.name}</span>
+                    <span className="shrink-0 text-xs text-fg3">{player.position}</span>
+                  </span>
+                  <span className="shrink-0 text-xs text-fg2">{player.team}</span>
+                </button>
+              ))
+            )}
           </div>
         )}
 
         {query.trim() && !isLoading && !error && results.length === 0 && !selected && (
-          <p className="mt-2 text-xs text-slate-500">일치하는 선수가 없습니다.</p>
+          <p className="mt-2 text-xs text-fg3">일치하는 선수가 없습니다.</p>
         )}
       </div>
 
       {selected && (
-        <article className="mt-5 overflow-hidden rounded-2xl border border-indigo-400/20 bg-gradient-to-br from-indigo-500/10 to-slate-950 p-5">
-          <div className="flex items-center gap-4">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-indigo-400/30 bg-indigo-400/10 text-lg font-black text-indigo-200">
-              {selected.name.slice(-2)}
-            </div>
-            <div>
-              <span className="text-[10px] font-black text-indigo-300">
-                {selected.playerType === 'PITCHER' ? 'PITCHER' : 'BATTER'}
+        <article className="mt-4 rounded-control border border-line p-4">
+          <div className="flex items-center gap-3.5">
+            <TeamBadge team={selected.team} fallbackLabel={selected.team} size={44} radius={13} />
+            <div className="min-w-0">
+              <span className="text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
+                {selected.playerType === 'PITCHER' ? '투수' : '타자'}
               </span>
-              <h3 className="text-xl font-black text-white">{selected.name}</h3>
-              <p className="text-xs font-semibold text-slate-400">{selected.team} · {selected.position}</p>
+              <h3 className="text-[19px] font-bold tracking-[-0.03em] text-fg">{selected.name}</h3>
+              <p className="text-xs text-fg2">
+                {selected.team} · {selected.position}
+              </p>
             </div>
           </div>
 
-          <div className="mt-5 flex items-center justify-between">
-            <h4 className="text-xs font-black text-slate-300">
-              {selected.seasonYear} 시즌 누적 기록
-            </h4>
-            <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-black text-emerald-300">
-              7월 23일 경기 반영
-            </span>
-          </div>
-          <dl className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <h4 className="mb-2 mt-4 text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
+            {selected.seasonYear} 시즌 누적
+          </h4>
+          <dl className="grid grid-cols-3 gap-2 sm:grid-cols-5">
             {selected.stats.map((stat) => (
-              <div key={stat.label} className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-center">
-                <dt className="text-[10px] font-semibold text-slate-500">{stat.label}</dt>
-                <dd className="mt-1 text-base font-black text-white">{stat.value}</dd>
+              <div key={stat.label} className="rounded-chip bg-surface2 px-2 py-2.5 text-center">
+                <dt className="text-2xs text-fg3">{stat.label}</dt>
+                <dd className="tnum mt-1 text-[15px] font-bold tracking-[-0.02em] text-fg">
+                  {stat.value}
+                </dd>
               </div>
             ))}
           </dl>
-          <p className="mt-3 text-[10px] text-slate-600">
-            네이버 스포츠 2026 KBO 시즌 기록 기준 · 선수 프로필 사진은 제공하지 않습니다.
+
+          <p className="mt-3.5 text-2xs text-fg3">
+            네이버 스포츠 KBO 기록 기준 · 선수 프로필 사진은 제공하지 않습니다.
           </p>
         </article>
       )}

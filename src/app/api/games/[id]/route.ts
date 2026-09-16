@@ -259,7 +259,7 @@ const gameDetailMap: Record<string, KBOGame> = {
     aiPreview: {
       id: 'ai-p-24-1',
       gameId: 'game-20260724-1',
-      headline: '🔮 1위 삼성 페덱 vs 두산 에이스 최민석, 잠실 빅매치!',
+      headline: '1위 삼성 페덱 vs 두산 에이스 최민석, 잠실 빅매치!',
       summary: '1위 삼성의 외국인 선발 크리스 페덱과 두산의 에이스 최민석(ERA 2.19, 리그 1위)의 맞대결입니다.',
       keyFactors: ['최민석 리그 ERA 1위(2.19)의 탈삼진 능력', '삼성 원정 연승 행진', '두산 홈 경기 높은 승률'],
       pitcherAnalysis: '최민석의 150km/h 강속구와 슬라이더 조합이 삼성 좌타 라인업을 상대로 어떻게 작동할지가 핵심 승부처입니다.',
@@ -283,7 +283,7 @@ const gameDetailMap: Record<string, KBOGame> = {
     aiPreview: {
       id: 'ai-p-24-2',
       gameId: 'game-20260724-2',
-      headline: '🔮 7연패 LG, 대전 원정에서 반등할까? 임찬규 vs 박준영',
+      headline: '7연패 LG, 대전 원정에서 반등할까? 임찬규 vs 박준영',
       summary: '7연패에 빠진 LG 트윈스가 대전 원정에서 한화 이글스와 맞붙습니다. 어제 9-3 대승을 거둔 한화의 기세를 LG 임찬규가 꺾을 수 있을지 주목됩니다.',
       keyFactors: ['LG 7연패 탈출 의지', '한화 어제 9-3 대승 기세', '임찬규의 대전 원정 성적'],
       pitcherAnalysis: '임찬규의 안정적인 구위가 한화 타선의 상승세를 꺾을 수 있을지, 박준영이 LG 중심 타선을 막아낼 수 있을지가 관전 포인트입니다.',
@@ -307,7 +307,7 @@ const gameDetailMap: Record<string, KBOGame> = {
     aiPreview: {
       id: 'ai-p-24-3',
       gameId: 'game-20260724-3',
-      headline: '🔮 KT 로건 앨런 vs 롯데 나균안, 사직 야간 경기!',
+      headline: 'KT 로건 앨런 vs 롯데 나균안, 사직 야간 경기!',
       summary: '2위 KT의 외국인 에이스 로건 앨런이 사직에서 롯데 나균안과 맞대결합니다.',
       keyFactors: ['로건 앨런의 원정 투구 안정감', '나균안의 사직 홈 성적', '롯데 타선의 반등 의지'],
       pitcherAnalysis: '로건 앨런의 커트패스트볼과 나균안의 직구-슬라이더 조합이 양 팀 타선을 어떻게 상대하느냐가 승패를 가를 것입니다.',
@@ -331,7 +331,7 @@ const gameDetailMap: Record<string, KBOGame> = {
     aiPreview: {
       id: 'ai-p-24-4',
       gameId: 'game-20260724-4',
-      headline: '🔮 NC 구창모 vs SSG 해치, 인천 문학 에이스 맞대결!',
+      headline: 'NC 구창모 vs SSG 해치, 인천 문학 에이스 맞대결!',
       summary: 'NC의 좌완 에이스 구창모와 SSG의 외국인 선발 해치가 인천 SSG랜더스필드에서 격돌합니다.',
       keyFactors: ['구창모의 좌완 제구력', '해치의 삼진 능력', 'NC 어제 승리 기세 연장 여부'],
       pitcherAnalysis: '구창모의 체인지업과 해치의 포심패스트볼 대결이 경기의 핵심 변수가 될 전망입니다.',
@@ -355,7 +355,7 @@ const gameDetailMap: Record<string, KBOGame> = {
     aiPreview: {
       id: 'ai-p-24-5',
       gameId: 'game-20260724-5',
-      headline: '🔮 키움 vs KIA, 광주 챔피언스 필드 금요일 나이트!',
+      headline: '키움 vs KIA, 광주 챔피언스 필드 금요일 나이트!',
       summary: '연패 수렁에 빠진 키움 히어로즈가 어제 한화에 3-9로 대패한 KIA와 광주에서 맞붙습니다.',
       keyFactors: ['키움 연패 탈출 의지', 'KIA 홈 경기 반등 여부', '양 팀 불펜 운영 전략'],
       pitcherAnalysis: '양 팀 선발 투수가 아직 미정이며, 경기 당일 발표될 예정입니다.',
