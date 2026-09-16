@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { KBOGame, AIBriefing } from '../types/kbo';
 import { CloseIcon, SparkIcon } from './ui/Icons';
 import { TeamBadge } from './ui/TeamBadge';
+import { KeyPlayerMatchup } from './game/KeyPlayerMatchup';
+import { GamePreview } from '@/types/preview';
 
 interface AIBriefModalProps {
   game: KBOGame | null;
@@ -14,6 +16,7 @@ interface AIBriefModalProps {
 export const AIBriefModal: React.FC<AIBriefModalProps> = ({ game, briefingType, onClose }) => {
   const [briefData, setBriefData] = useState<AIBriefing | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [preview, setPreview] = useState<GamePreview | null>(null);
 
   useEffect(() => {
     if (!game || !briefingType) return;
@@ -42,6 +45,17 @@ export const AIBriefModal: React.FC<AIBriefModalProps> = ({ game, briefingType, 
     };
 
     fetchAIBrief();
+
+    // 키플레이어 비교는 경기 전 정보라 프리뷰에서만 띄운다.
+    setPreview(null);
+    if (briefingType === 'PREVIEW') {
+      fetch(`/api/games/${game.id}/preview`)
+        .then((res) => res.json())
+        .then((json) => {
+          if (isMounted && json.success) setPreview(json.data);
+        })
+        .catch((err) => console.error('Failed to fetch game preview:', err));
+    }
 
     return () => {
       isMounted = false;
@@ -74,7 +88,7 @@ export const AIBriefModal: React.FC<AIBriefModalProps> = ({ game, briefingType, 
       role="presentation"
     >
       <div
-        className="animate-fadeIn relative max-h-[88vh] w-full max-w-2xl overflow-hidden rounded-[20px] border border-line bg-surface shadow-pop"
+        className="animate-fadeIn relative max-h-[88vh] w-full max-w-[720px] overflow-hidden rounded-[20px] border border-line bg-surface shadow-pop"
         onClick={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
@@ -129,6 +143,8 @@ export const AIBriefModal: React.FC<AIBriefModalProps> = ({ game, briefingType, 
                 {briefData.summary}
               </p>
             </div>
+
+            {preview && <KeyPlayerMatchup preview={preview} />}
 
             <div>
               <h5 className="mb-2.5 text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">

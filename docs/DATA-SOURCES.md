@@ -47,6 +47,13 @@ GET /schedule/games?fromDate={YYYY-MM-DD}&toDate={YYYY-MM-DD}&upperCategoryId=kb
 - `awayTeamPreviousGames` / `homeTeamPreviousGames` — 최근 5경기 결과
 - `awayStandings` / `homeStandings` — 순위·승률·팀 타율·팀 평균자책
 
+예정 경기뿐 아니라 **이미 끝난 경기에도 데이터가 있다**(경기 전 시점 기준).
+
+**`hotColdZone` 의 zone 번호**는 1~9 가 스트라이크 존 3×3 을 왼쪽 위부터 읽는
+순서, 10~13 이 존 바깥 네 구석(좌상·우상·좌하·우하)이다. 문서가 없어 값으로
+확인했다 — 한가운데인 zone 5 의 타율이 가장 높게 나오고, 네이버 프리뷰 화면과
+숫자 배치가 그대로 일치한다. `hraStep` 은 1(낮음)~5(높음) 단계이며 문자열로 온다.
+
 ## 팀 기록
 
 ```
@@ -103,6 +110,13 @@ GET /statistics/categories/kbo/seasons/{year}/players?playerType=PITCHER
   10팀 전체 매트릭스가 필요하면 시즌 일정을 월 단위로 받아 결과를 집계해야 한다
   (시즌당 8회 요청 — 3월~10월). 두 팀만 필요하면 `previewData.seasonVsResult` 가 있다.
 - 2007년 이전 기록. KBO 공식 기록실을 따로 크롤링해야 한다.
+
+## 이미지 핫링크
+
+선수 사진(`sports-phinf.pstatic.net/player/kbo/default/{playerCode}.png`)과
+구단 엠블럼은 **Referer 를 보고 막는다.** 다른 도메인에서 부르면 403 이 온다.
+`<img referrerPolicy="no-referrer">` 로 Referer 를 빼면 200 으로 온다.
+공개 서비스로 운영한다면 서버에서 받아 캐시하는 쪽이 낫다.
 
 ## 주의
 
