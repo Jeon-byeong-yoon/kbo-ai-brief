@@ -37,7 +37,6 @@ export interface KeyPlayer {
   backNumber: string;
   /** '우투좌타' 같은 표기 */
   hitType: string;
-  imageUrl: string;
   season: KeyPlayerStatLine;
   recentFive: KeyPlayerStatLine;
   vsOpponent: KeyPlayerVsLine;

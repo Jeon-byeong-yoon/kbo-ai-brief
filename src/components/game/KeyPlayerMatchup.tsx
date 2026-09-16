@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { GamePreview, HotColdCell, KeyPlayer } from '@/types/preview';
 import { findTeam, teamColors } from '@/lib/team-assets';
 import { TeamBadge } from '@/components/ui/TeamBadge';
@@ -63,40 +63,23 @@ const HotColdZone: React.FC<{ zones: HotColdCell[]; label: string }> = ({ zones,
   );
 };
 
-const PlayerHead: React.FC<{ player: KeyPlayer; teamCode: string; align: 'left' | 'right' }> = ({
-  player,
-  teamCode,
-  align,
-}) => {
-  const [imageFailed, setImageFailed] = useState(false);
-
-  return (
-    <div className={`flex min-w-0 flex-1 flex-col items-center gap-2`}>
-      <div className="flex h-[76px] w-[76px] items-end justify-center overflow-hidden rounded-full bg-surface2">
-        {imageFailed ? (
-          <TeamBadge team={teamCode} size={44} radius={14} className="mb-3" />
-        ) : (
-          // 네이버가 주는 선수 프로필 사진. 없는 선수는 구단 배지로 떨어진다.
-          // referrerPolicy 가 없으면 Referer 를 보고 403 을 준다(핫링크 차단).
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={player.imageUrl}
-            alt={player.name}
-            referrerPolicy="no-referrer"
-            className="h-[80px] w-[80px] object-contain object-bottom"
-            onError={() => setImageFailed(true)}
-          />
-        )}
-      </div>
-      <div className={`min-w-0 text-center`} data-align={align}>
-        <div className="truncate text-[15px] font-bold tracking-[-0.03em] text-fg">{player.name}</div>
-        <div className="tnum text-2xs text-fg3">
-          #{player.backNumber} · {player.hitType}
-        </div>
+const PlayerHead: React.FC<{ player: KeyPlayer; teamCode: string }> = ({ player, teamCode }) => (
+  <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
+    {/*
+      선수 프로필 사진은 쓰지 않는다. 네이버가 Referer 로 핫링크를 막아 둔 것을
+      우회해야 가져올 수 있고, 사진 자체도 구단·네이버 자산이다. 구단 배지로 충분하다.
+    */}
+    <div className="flex h-[64px] w-[64px] items-center justify-center rounded-full bg-surface2">
+      <TeamBadge team={teamCode} size={40} radius={13} />
+    </div>
+    <div className="min-w-0 text-center">
+      <div className="truncate text-[15px] font-bold tracking-[-0.03em] text-fg">{player.name}</div>
+      <div className="tnum text-2xs text-fg3">
+        #{player.backNumber} · {player.hitType}
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 const Row: React.FC<{ label: string; left: React.ReactNode; right: React.ReactNode; strong?: boolean }> = ({
   label,
@@ -140,11 +123,11 @@ export const KeyPlayerMatchup: React.FC<{ preview: GamePreview }> = ({ preview }
       <div className="rounded-control border border-line p-4">
         {/* 선수 헤드 */}
         <div className="flex items-start gap-3">
-          <PlayerHead player={away} teamCode={preview.away.teamCode} align="right" />
+          <PlayerHead player={away} teamCode={preview.away.teamCode} />
           <div className="flex flex-col items-center gap-1 pt-7">
             <span className="text-2xs text-fg3">VS</span>
           </div>
-          <PlayerHead player={home} teamCode={preview.home.teamCode} align="left" />
+          <PlayerHead player={home} teamCode={preview.home.teamCode} />
         </div>
 
         {/* 팀 색 구분 바 */}

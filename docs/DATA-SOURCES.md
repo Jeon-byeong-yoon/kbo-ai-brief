@@ -94,7 +94,8 @@ GET /statistics/categories/kbo/seasons/{year}/players?playerType=PITCHER
   이닝은 이 분수 표기가 관례이므로 문자열 그대로 쓰는 게 낫다.
 - **WAR 은 오래된 시즌에 없다.** 값이 전부 0 으로 오므로 화면에서 칸을 빼는 게 낫다.
 - `result.seasonPlayerStats[]` 에 `hitterHra`, `hitterWar`, `hitterOps`,
-  `pitcherEra`, `pitcherWhip` 등 지표와 **`playerImageUrl`(선수 사진)** 이 들어 있다.
+  `pitcherEra`, `pitcherWhip` 등 지표가 들어 있다. `playerImageUrl` 도 오지만
+  위의 이유로 쓰지 않는다.
 
 ## 과거 구단명
 
@@ -111,12 +112,16 @@ GET /statistics/categories/kbo/seasons/{year}/players?playerType=PITCHER
   (시즌당 8회 요청 — 3월~10월). 두 팀만 필요하면 `previewData.seasonVsResult` 가 있다.
 - 2007년 이전 기록. KBO 공식 기록실을 따로 크롤링해야 한다.
 
-## 이미지 핫링크
+## 이미지는 쓰지 않는다
 
 선수 사진(`sports-phinf.pstatic.net/player/kbo/default/{playerCode}.png`)과
-구단 엠블럼은 **Referer 를 보고 막는다.** 다른 도메인에서 부르면 403 이 온다.
-`<img referrerPolicy="no-referrer">` 로 Referer 를 빼면 200 으로 온다.
-공개 서비스로 운영한다면 서버에서 받아 캐시하는 쪽이 낫다.
+구단 엠블럼은 **네이버가 Referer 로 핫링크를 막아 두었다.** 다른 도메인에서
+부르면 403 이 온다.
+
+`<img referrerPolicy="no-referrer">` 로 Referer 를 빼면 200 이 오지만, 이건
+해결이 아니라 **상대가 의도적으로 걸어둔 접근 제어를 우회하는 것**이다.
+그래서 이 앱은 네이버 이미지를 직접 불러오지 않는다. 선수는 구단 배지로,
+구단 엠블럼은 `public/teams/` 에 둔 파일로 표시한다.
 
 ## 주의
 

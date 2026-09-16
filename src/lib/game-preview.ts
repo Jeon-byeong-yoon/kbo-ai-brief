@@ -56,7 +56,6 @@ function toKeyPlayer(raw: Raw | undefined): KeyPlayer | null {
     name: str(info.name),
     backNumber: str(info.backnum),
     hitType: str(info.hitType),
-    imageUrl: `https://sports-phinf.pstatic.net/player/kbo/default/${code}.png`,
     season: statLine(raw.currentSeasonStats),
     recentFive: statLine(raw.recentFiveGamesStats),
     vsOpponent: vsLine(raw.currentSeasonStatsOnOpponents),
