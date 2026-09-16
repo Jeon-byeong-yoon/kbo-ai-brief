@@ -42,6 +42,25 @@ export const MoonIcon = ({ size = 15, className }: IconProps) => (
   </svg>
 );
 
+export const ChevronLeftIcon = ({ size = 16, className }: IconProps) => (
+  <svg {...base(size, className)} viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M10 3.5 5.5 8l4.5 4.5" />
+  </svg>
+);
+
+export const ChevronRightIcon = ({ size = 16, className }: IconProps) => (
+  <svg {...base(size, className)} viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round">
+    <path d="M6 3.5 10.5 8 6 12.5" />
+  </svg>
+);
+
+export const CalendarIcon = ({ size = 15, className }: IconProps) => (
+  <svg {...base(size, className)} viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2.2" y="3.4" width="11.6" height="10.4" rx="2.2" />
+    <path d="M2.2 6.6h11.6M5.4 2.2v2.4M10.6 2.2v2.4" />
+  </svg>
+);
+
 export const ChevronDownIcon = ({ size = 14, className }: IconProps) => (
   <svg {...base(size, className)} viewBox="0 0 16 16" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
     <path d="m4.5 6.5 3.5 3.5 3.5-3.5" />

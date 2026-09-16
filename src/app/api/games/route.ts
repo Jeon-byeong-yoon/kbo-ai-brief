@@ -7,7 +7,11 @@ export async function GET(request: NextRequest) {
   const requestedDate = searchParams.get('date') || '2026-07-28';
 
   try {
-    const url = `https://api-gw.sports.naver.com/schedule/games?date=${requestedDate}&upperCategoryId=kbaseball`;
+    // 네이버 일정 API 의 ?date= 는 무시되고 항상 '오늘' 경기를 돌려준다.
+    // 특정 날짜를 받으려면 fromDate/toDate 로 범위를 주고 size 를 명시해야 한다.
+    const url =
+      `https://api-gw.sports.naver.com/schedule/games` +
+      `?fromDate=${requestedDate}&toDate=${requestedDate}&upperCategoryId=kbaseball&size=50`;
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)',
@@ -65,7 +69,7 @@ export async function GET(request: NextRequest) {
 
       const game: KBOGame = {
         id: g.gameId,
-        date: requestedDate,
+        date: g.gameDate || detail.gameDate || requestedDate,
         time: gameTime,
         stadium: detail.stadium || '구장 미정',
         awayTeam,

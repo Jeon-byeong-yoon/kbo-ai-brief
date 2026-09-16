@@ -8,7 +8,9 @@ import { PlayerLeaderboard } from '@/components/PlayerLeaderboard';
 import { HistoricalStandings } from '@/components/HistoricalStandings';
 import { PlayerSearch } from '@/components/PlayerSearch';
 import { AIBriefModal } from '@/components/AIBriefModal';
+import { DateStrip } from '@/components/DateStrip';
 import { ChartIcon, HistoryIcon, SearchIcon, TrophyIcon } from '@/components/ui/Icons';
+import { formatDateLabel, todayString } from '@/lib/date';
 import {
   KBOGame,
   KBOTeamStanding,
@@ -28,7 +30,9 @@ const RIGHT_TABS: Array<{ value: RightTab; label: string; icon: React.ReactNode 
 ];
 
 export default function HomePage() {
-  const [selectedDate, setSelectedDate] = useState<string>('2026-07-24');
+  // 서버와 클라이언트의 '오늘'이 어긋나면 하이드레이션이 깨지므로 마운트 후에 확정한다.
+  const [today, setToday] = useState<string>('');
+  const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedTeam, setSelectedTeam] = useState<string>('ALL');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
 
@@ -41,18 +45,9 @@ export default function HomePage() {
       setFavoriteTeam(saved);
     }
 
-    // 시스템 날짜 감지 및 자동 설정 (2026-07-23 ~ 2026-07-25 범위만 동적 적용, 그 외엔 24일 기본값)
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
-    const dd = String(today.getDate()).padStart(2, '0');
-    const formattedDate = `${yyyy}-${mm}-${dd}`;
-
-    if (['2026-07-23', '2026-07-24', '2026-07-25'].includes(formattedDate)) {
-      setSelectedDate(formattedDate);
-    } else {
-      setSelectedDate('2026-07-24');
-    }
+    const now = todayString();
+    setToday(now);
+    setSelectedDate(now);
   }, []);
 
   const handleFavoriteTeamChange = (teamCode: string) => {
@@ -77,6 +72,7 @@ export default function HomePage() {
   const [activeBriefingType, setActiveBriefingType] = useState<'PREVIEW' | 'REVIEW' | null>(null);
 
   const fetchRealKBOData = useCallback(async () => {
+    if (!selectedDate) return;
     try {
       setLastUpdatedTime(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' }));
 
@@ -186,25 +182,17 @@ export default function HomePage() {
       .join(' · ');
   }, [gamesState]);
 
-  const formattedDate = useMemo(() => {
-    const parsed = new Date(`${selectedDate}T00:00:00`);
-    if (Number.isNaN(parsed.getTime())) return selectedDate;
-    const weekday = ['일', '월', '화', '수', '목', '금', '토'][parsed.getDay()];
-    return `${selectedDate.replace(/-/g, '.')} (${weekday})`;
-  }, [selectedDate]);
+  const formattedDate = formatDateLabel(selectedDate);
 
   return (
     <div className="min-h-screen bg-bg pb-16">
-      <Header
-        selectedDate={selectedDate}
-        onDateChange={setSelectedDate}
-        selectedTeam={selectedTeam}
-        onTeamSelect={setSelectedTeam}
-        favoriteTeam={favoriteTeam}
-        onFavoriteTeamChange={handleFavoriteTeamChange}
-      />
+      <Header favoriteTeam={favoriteTeam} onFavoriteTeamChange={handleFavoriteTeamChange} />
 
       <main className="mx-auto flex max-w-shell flex-col gap-5 px-4 pt-6 sm:px-6 lg:px-8">
+        {selectedDate && (
+          <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} today={today} />
+        )}
+
         {/* 오늘의 요약 + 상태 필터 */}
         <section className="flex flex-col items-start justify-between gap-5 rounded-card border border-line bg-surface p-6 shadow-card md:flex-row md:items-center">
           <div className="min-w-0">
