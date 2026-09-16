@@ -60,9 +60,9 @@ export async function GET() {
       // 2025 전년도 성적 데이터
       const historical2025 = {
         year: 2025,
-        champion: 'LG 트윈스 🏆',
+        champion: 'LG 트윈스',
         teams: [
-          { rank: 1, name: 'LG 트윈스', code: 'LG', gamesPlayed: 144, wins: 85, losses: 56, draws: 3, winRate: 0.603, postseasonResult: '한국시리즈 우승 🏆' },
+          { rank: 1, name: 'LG 트윈스', code: 'LG', gamesPlayed: 144, wins: 85, losses: 56, draws: 3, winRate: 0.603, postseasonResult: '한국시리즈 우승' },
           { rank: 2, name: '한화 이글스', code: 'HANWHA', gamesPlayed: 144, wins: 83, losses: 57, draws: 4, winRate: 0.593, postseasonResult: '한국시리즈 준우승' },
           { rank: 3, name: 'SSG 랜더스', code: 'SSG', gamesPlayed: 144, wins: 75, losses: 65, draws: 4, winRate: 0.536, postseasonResult: '플레이오프 진출' },
           { rank: 4, name: '삼성 라이온즈', code: 'SAMSUNG', gamesPlayed: 144, wins: 74, losses: 68, draws: 2, winRate: 0.521, postseasonResult: '준플레이오프 진출' },
@@ -107,9 +107,9 @@ export async function GET() {
       standings: real2026Fallback,
       historical2025: {
         year: 2025,
-        champion: 'LG 트윈스 🏆',
+        champion: 'LG 트윈스',
         teams: [
-          { rank: 1, name: 'LG 트윈스', code: 'LG', gamesPlayed: 144, wins: 85, losses: 56, draws: 3, winRate: 0.603, postseasonResult: '한국시리즈 우승 🏆' },
+          { rank: 1, name: 'LG 트윈스', code: 'LG', gamesPlayed: 144, wins: 85, losses: 56, draws: 3, winRate: 0.603, postseasonResult: '한국시리즈 우승' },
           { rank: 2, name: '한화 이글스', code: 'HANWHA', gamesPlayed: 144, wins: 83, losses: 57, draws: 4, winRate: 0.593, postseasonResult: '한국시리즈 준우승' },
           { rank: 3, name: 'SSG 랜더스', code: 'SSG', gamesPlayed: 144, wins: 75, losses: 65, draws: 4, winRate: 0.536, postseasonResult: '플레이오프 진출' },
           { rank: 4, name: '삼성 라이온즈', code: 'SAMSUNG', gamesPlayed: 144, wins: 74, losses: 68, draws: 2, winRate: 0.521, postseasonResult: '준플레이오프 진출' },

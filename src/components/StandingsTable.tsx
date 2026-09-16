@@ -2,136 +2,172 @@
 
 import React from 'react';
 import { KBOTeamStanding } from '../types/kbo';
+import { TeamBadge } from './ui/TeamBadge';
+import { StarIcon } from './ui/Icons';
 
 interface StandingsTableProps {
   standings: KBOTeamStanding[];
   selectedTeam: string;
+  favoriteTeam?: string;
   onTeamSelect: (teamCode: string) => void;
   title?: string;
   subtitle?: string;
 }
 
+/** 'WWLWL' 또는 '3승 2패' 어느 쪽으로 와도 최근 전적을 승/패 칩으로 그린다. */
+function RecentForm({ value }: { value: string }) {
+  const letters = value?.match(/[WLD]/g);
+
+  if (!letters?.length) {
+    return <span className="text-xs text-fg2">{value || '-'}</span>;
+  }
+
+  return (
+    <div className="flex justify-center gap-[3px]">
+      {letters.map((ch, i) => {
+        const win = ch === 'W';
+        const draw = ch === 'D';
+        return (
+          <span
+            key={`${ch}-${i}`}
+            className={`flex h-[14px] w-[14px] items-center justify-center rounded-[4px] text-[9px] font-bold ${
+              draw ? 'bg-surface2 text-fg3' : win ? 'bg-win-soft text-win' : 'bg-surface2 text-fg3'
+            }`}
+          >
+            {draw ? '무' : win ? '승' : '패'}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
 export const StandingsTable: React.FC<StandingsTableProps> = ({
   standings,
   selectedTeam,
+  favoriteTeam,
   onTeamSelect,
-  title = '2026 KBO 팀 순위',
-  subtitle = '포스트시즌 1~5위',
+  title = '2026 팀 순위',
+  subtitle = '포스트시즌 진출 상위 5팀',
 }) => {
   return (
-    <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl border border-slate-800/80 overflow-hidden shadow-lg">
-      <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span className="text-lg">🏆</span>
-          <h2 className="text-base font-bold text-white">{title}</h2>
+    <section className="rounded-card border border-line bg-surface px-5 pb-3.5 pt-4 shadow-card">
+      <div className="flex items-end justify-between gap-3 pb-3.5">
+        <div>
+          <h2 className="text-[15px] font-bold tracking-[-0.025em] text-fg">{title}</h2>
+          <p className="mt-0.5 text-xs text-fg3">{subtitle}</p>
         </div>
-        <span className="text-xs text-slate-400">{subtitle}</span>
+        <span className="text-2xs text-fg3">전일 대비 ▲▼</span>
       </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse text-xs">
+      <div className="-mx-1 overflow-x-auto px-1">
+        <table className="w-full min-w-[460px] table-fixed border-collapse">
+          <colgroup>
+            <col className="w-[48px]" />
+            <col />
+            <col className="w-[34px]" />
+            <col className="w-[30px]" />
+            <col className="w-[30px]" />
+            <col className="w-[26px]" />
+            <col className="w-[46px]" />
+            <col className="w-[42px]" />
+            <col className="hidden w-[88px] sm:table-column" />
+            <col className="w-[50px]" />
+          </colgroup>
           <thead>
-            <tr className="bg-slate-950/60 text-slate-400 font-semibold border-b border-slate-800/60">
-              <th className="py-2.5 px-3 text-center w-12">순위</th>
-              <th className="py-2.5 px-3">팀</th>
-              <th className="py-2.5 px-2 text-center">경기</th>
-              <th className="py-2.5 px-2 text-center">승</th>
-              <th className="py-2.5 px-2 text-center">패</th>
-              <th className="py-2.5 px-2 text-center">무</th>
-              <th className="py-2.5 px-2 text-center font-bold text-slate-300">승률</th>
-              <th className="py-2.5 px-2 text-center">차</th>
-              <th className="py-2.5 px-3 text-center hidden sm:table-cell">최근 10경기</th>
-              <th className="py-2.5 px-3 text-center">연속/비고</th>
+            <tr className="text-2xs font-semibold tracking-[-0.01em] text-fg3">
+              <th className="pb-2.5 text-center font-semibold">순위</th>
+              <th className="pb-2.5 text-left font-semibold">팀</th>
+              <th className="pb-2.5 text-center font-semibold">경기</th>
+              <th className="pb-2.5 text-center font-semibold">승</th>
+              <th className="pb-2.5 text-center font-semibold">패</th>
+              <th className="pb-2.5 text-center font-semibold">무</th>
+              <th className="pb-2.5 text-center font-semibold">승률</th>
+              <th className="pb-2.5 text-center font-semibold">게임차</th>
+              <th className="hidden pb-2.5 text-center font-semibold sm:table-cell">최근</th>
+              <th className="pb-2.5 text-right font-semibold">연속</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-800/40 text-slate-300">
+          <tbody>
             {standings.map((row) => {
               const isSelected = selectedTeam === row.team.code;
+              const isFavorite = favoriteTeam === row.team.code;
               const isPlayoffs = row.rank <= 5;
-              const isWinStreak = row.streak.includes('승') || row.streak.includes('V12');
+              const isWinStreak = row.streak.includes('승');
 
               return (
                 <tr
                   key={row.team.id}
                   onClick={() => onTeamSelect(row.team.code)}
                   className={`cursor-pointer transition-colors ${
-                    isSelected
-                      ? 'bg-rose-500/10 hover:bg-rose-500/15'
-                      : 'hover:bg-slate-800/50'
+                    isFavorite ? 'bg-accent-soft' : isSelected ? 'bg-surface2' : 'hover:bg-surface2'
                   }`}
                 >
-                  {/* Rank & Change */}
-                  <td className="py-3 px-3 text-center font-bold">
+                  <td className="border-t border-hair py-2.5">
                     <div className="flex items-center justify-center gap-1">
                       <span
-                        className={`inline-flex items-center justify-center w-5 h-5 rounded-md ${
-                          row.rank === 1
-                            ? 'bg-amber-500/20 text-amber-300 font-black border border-amber-500/40'
-                            : isPlayoffs
-                            ? 'bg-slate-800 text-slate-200'
-                            : 'text-slate-500'
+                        className={`tnum min-w-[13px] text-right text-[13px] font-bold ${
+                          isPlayoffs ? 'text-fg' : 'text-fg3'
                         }`}
                       >
                         {row.rank}
                       </span>
-                      {row.rankChange !== undefined && (
-                        <span className="text-[10px] font-medium shrink-0">
-                          {row.rankChange > 0 && (
-                            <span className="text-rose-400">▲{row.rankChange}</span>
-                          )}
-                          {row.rankChange < 0 && (
-                            <span className="text-indigo-400">▼{Math.abs(row.rankChange)}</span>
-                          )}
-                          {row.rankChange === 0 && (
-                            <span className="text-slate-600">-</span>
-                          )}
-                        </span>
-                      )}
+                      <span className="tnum w-[14px] text-[10px] font-bold">
+                        {row.rankChange === undefined || row.rankChange === 0 ? (
+                          <span className="text-fg3">·</span>
+                        ) : row.rankChange > 0 ? (
+                          <span className="text-live">▲{row.rankChange}</span>
+                        ) : (
+                          <span className="text-accent">▼{Math.abs(row.rankChange)}</span>
+                        )}
+                      </span>
                     </div>
                   </td>
 
-                  {/* Team Name */}
-                  <td className="py-3 px-3 font-semibold">
-                    <div className="flex items-center gap-2">
+                  <td className="border-t border-hair py-2.5">
+                    <div className="flex min-w-0 items-center gap-[7px] pr-2">
+                      <TeamBadge
+                        team={row.team.code}
+                        fallbackLabel={row.team.shortName}
+                        size={26}
+                        radius={8}
+                      />
                       <span
-                        className={`w-5 h-5 rounded flex items-center justify-center text-[10px] font-black border ${row.team.logoBg}`}
+                        className={`truncate text-[12.5px] tracking-[-0.025em] text-fg ${
+                          isFavorite ? 'font-bold' : 'font-medium'
+                        }`}
                       >
-                        {row.team.shortName[0]}
-                      </span>
-                      <span className={isSelected ? 'text-rose-300 font-bold' : 'text-slate-100'}>
                         {row.team.name}
                       </span>
+                      {isFavorite && <StarIcon size={10} className="shrink-0 text-accent" />}
                     </div>
                   </td>
 
-                  {/* Games, Wins, Losses, Draws */}
-                  <td className="py-3 px-2 text-center text-slate-400">{row.gamesPlayed}</td>
-                  <td className="py-3 px-2 text-center text-slate-200 font-semibold">{row.wins}</td>
-                  <td className="py-3 px-2 text-center text-slate-400">{row.losses}</td>
-                  <td className="py-3 px-2 text-center text-slate-500">{row.draws}</td>
-
-                  {/* Win Rate */}
-                  <td className="py-3 px-2 text-center font-bold text-amber-400">
+                  <td className="tnum border-t border-hair py-2.5 text-center text-[12.5px] text-fg3">
+                    {row.gamesPlayed}
+                  </td>
+                  <td className="tnum border-t border-hair py-2.5 text-center text-[12.5px] font-semibold text-fg">
+                    {row.wins}
+                  </td>
+                  <td className="tnum border-t border-hair py-2.5 text-center text-[12.5px] text-fg2">
+                    {row.losses}
+                  </td>
+                  <td className="tnum border-t border-hair py-2.5 text-center text-[12.5px] text-fg3">
+                    {row.draws}
+                  </td>
+                  <td className="tnum border-t border-hair py-2.5 text-center text-[13px] font-bold tracking-[-0.02em] text-fg">
                     {row.winRate.toFixed(3).replace(/^0/, '')}
                   </td>
-
-                  {/* Games Behind */}
-                  <td className="py-3 px-2 text-center text-slate-400 font-mono">
+                  <td className="tnum border-t border-hair py-2.5 text-center text-[12.5px] text-fg2">
                     {row.gameBehind === 0 ? '-' : row.gameBehind.toFixed(1)}
                   </td>
-
-                  {/* Recent 10 */}
-                  <td className="py-3 px-3 text-center text-slate-400 hidden sm:table-cell">
-                    {row.recent10}
+                  <td className="hidden border-t border-hair py-2.5 sm:table-cell">
+                    <RecentForm value={row.recent10} />
                   </td>
-
-                  {/* Streak */}
-                  <td className="py-3 px-3 text-center font-medium">
+                  <td className="border-t border-hair py-2.5 text-right">
                     <span
-                      className={`px-1.5 py-0.5 rounded text-[11px] ${
-                        isWinStreak
-                          ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                          : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'
+                      className={`inline-block rounded-md px-1.5 py-0.5 text-2xs font-semibold ${
+                        isWinStreak ? 'bg-win-soft text-win' : 'bg-lose-soft text-lose'
                       }`}
                     >
                       {row.streak}
@@ -143,6 +179,6 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({
           </tbody>
         </table>
       </div>
-    </div>
+    </section>
   );
 };

@@ -89,8 +89,8 @@ function generateFallbackBriefing(game: KBOGame, type: 'PREVIEW' | 'REVIEW'): AI
     id: `ai-${type.toLowerCase()}-fallback-${Date.now()}`,
     gameId: game.id,
     headline: isPreview
-      ? `🔮 [AI 분석] ${game.awayTeam.shortName} vs ${game.homeTeam.shortName} 베테랑 선발 대결`
-      : `📊 [AI 분석] ${game.awayTeam.shortName} ${game.awayScore}:${game.homeScore} ${game.homeTeam.shortName} 경기 요약`,
+      ? `[AI 분석] ${game.awayTeam.shortName} vs ${game.homeTeam.shortName} 베테랑 선발 대결`
+      : `[AI 분석] ${game.awayTeam.shortName} ${game.awayScore}:${game.homeScore} ${game.homeTeam.shortName} 경기 요약`,
     summary: isPreview
       ? `${game.awayTeam.name} (선발 ${game.awayPitcher})과 ${game.homeTeam.name} (선발 ${game.homePitcher})의 치열한 마운드 대결입니다. 초반 기선제압이승패를 결정지을 전망입니다.`
       : `치열한 접전 끝에 ${game.homeScore > game.awayScore ? game.homeTeam.name : game.awayTeam.name}의 승리로 마감되었습니다. 득점권 주자 번트 및 불펜 필승조 투입 타이밍이 빛났습니다.`,

@@ -46,6 +46,21 @@
 
 ---
 
+## 🎨 디자인 (라이트 / 다크)
+
+애플 HIG 와 토스를 레퍼런스로 삼은 밝고 정돈된 화면이며, 헤더 오른쪽 해·달
+버튼으로 라이트·다크를 전환한다. 고른 적이 없으면 시스템 설정을 따른다.
+
+색은 `src/app/globals.css` 에 CSS 변수로 한 번만 정의하고 컴포넌트는 시맨틱
+클래스(`bg-surface`, `text-fg2`)만 쓰므로 모드별 분기 코드가 없다. 구단 엠블럼은
+`src/lib/team-assets.ts` 한 곳에서 관리하고, 파일이 없으면 구단 상징색 배지로
+자동으로 떨어진다.
+
+토큰 표, 크기 규칙, 엠블럼 교체 절차, 남아 있는 문제는 **[docs/DESIGN.md](docs/DESIGN.md)**
+에 정리돼 있다. 에셋 출처와 라이선스는 [public/teams/README.md](public/teams/README.md) 참고.
+
+---
+
 ## 🏗️ 시스템 데이터 파이프라인 (Data Architecture)
 
 ```mermaid
