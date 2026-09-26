@@ -8,12 +8,15 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { ArrowRightIcon } from '@/components/ui/Icons';
 import { LiveCount, LiveMatchup, LiveWinRate } from '@/components/game/LiveScoreboard';
 import { LineupEntry, PitcherLine } from '@/types/live';
+import { GamePitches } from '@/types/pitch';
+import { StrikeZone } from '@/components/game/StrikeZone';
 
-type Tab = 'LINEUP' | 'PITCHERS';
+type Tab = 'LINEUP' | 'PITCHERS' | 'PITCHES';
 
 const TABS: Array<{ value: Tab; label: string }> = [
   { value: 'LINEUP', label: '타순' },
   { value: 'PITCHERS', label: '투수' },
+  { value: 'PITCHES', label: '투구 위치' },
 ];
 
 const th = 'whitespace-nowrap pb-2.5 text-center text-2xs font-semibold text-fg3';
@@ -138,6 +141,8 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState<Tab>('LINEUP');
   const [updatedAt, setUpdatedAt] = useState('');
+  const [pitches, setPitches] = useState<GamePitches | null>(null);
+  const [pitchError, setPitchError] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -157,6 +162,20 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
   useEffect(() => {
     load();
   }, [load]);
+
+  // 이닝 수만큼 호출이 나가므로 탭을 열 때만 받는다.
+  useEffect(() => {
+    if (tab !== 'PITCHES' || pitches || !game) return;
+    const q = new URLSearchParams({
+      home: game.homeTeam.code,
+      away: game.awayTeam.code,
+      ...(game.isLive ? { live: '1' } : {}),
+    });
+    fetch(`/api/games/${gameId}/pitches?${q}`)
+      .then((r) => r.json())
+      .then((j) => (j.success ? setPitches(j.data) : setPitchError(j.error ?? '')))
+      .catch(() => setPitchError('투구 데이터를 불러오지 못했습니다.'));
+  }, [tab, pitches, game, gameId]);
 
   // 진행 중인 경기만 짧은 주기로 다시 받는다. 끝난 경기는 더 이상 바뀌지 않는다.
   useEffect(() => {
@@ -367,19 +386,31 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             ))}
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            {tab === 'LINEUP' ? (
-              <>
-                <LineupTable rows={game.awayBatters} title={game.awayTeam.name} />
-                <LineupTable rows={game.homeBatters} title={game.homeTeam.name} />
-              </>
-            ) : (
-              <>
-                <PitcherTable rows={game.awayPitchers} title={game.awayTeam.name} />
-                <PitcherTable rows={game.homePitchers} title={game.homeTeam.name} />
-              </>
-            )}
-          </div>
+          {tab === 'PITCHES' ? (
+            <section className="rounded-card border border-line bg-surface px-5 pb-5 pt-4 shadow-card">
+              {pitches ? (
+                <StrikeZone data={pitches} awayTeam={game.awayTeam} homeTeam={game.homeTeam} />
+              ) : (
+                <p className="py-8 text-center text-[13px] text-fg3">
+                  {pitchError || '투구 데이터를 불러오는 중입니다.'}
+                </p>
+              )}
+            </section>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {tab === 'LINEUP' ? (
+                <>
+                  <LineupTable rows={game.awayBatters} title={game.awayTeam.name} />
+                  <LineupTable rows={game.homeBatters} title={game.homeTeam.name} />
+                </>
+              ) : (
+                <>
+                  <PitcherTable rows={game.awayPitchers} title={game.awayTeam.name} />
+                  <PitcherTable rows={game.homePitchers} title={game.homeTeam.name} />
+                </>
+              )}
+            </div>
+          )}
         </div>
       </main>
     </div>
