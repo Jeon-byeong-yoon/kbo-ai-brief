@@ -56,5 +56,13 @@ export interface ChampionshipPrediction {
     regression: number;
     calibratedOn: string;
   };
+  /**
+   * 네이버 응답이 말하는 "아직 안 치른 가장 이른 경기" 날짜 (YYYY-MM-DD).
+   * 캐시가 낡으면 이 값도 같이 과거로 남으므로 데이터의 신선도를 그대로 드러낸다.
+   */
+  dataAsOf: string | null;
+  /** dataAsOf 가 오늘보다 며칠 뒤처졌는지. 0 이면 최신. */
+  staleDays: number;
+  /** 시뮬레이션을 돌린 시각. 데이터의 나이와는 다르다. */
   generatedAt: string;
 }

@@ -7,6 +7,26 @@ import { TeamBadge } from '@/components/ui/TeamBadge';
 const pct = (n: number) => (n >= 10 ? n.toFixed(0) : n >= 1 ? n.toFixed(1) : n > 0 ? '<1' : '0');
 const rate = (n: number) => n.toFixed(3).replace(/^0/, '');
 
+/** "2026-09-26" -> "9/26" */
+const shortDate = (iso: string) => {
+  const [, m, d] = iso.split('-');
+  return `${Number(m)}/${Number(d)}`;
+};
+
+/** ISO 시각을 한국 시간 "9/26 17:48" 로. 화면은 클라이언트에서만 그려지므로 로캘을 써도 된다. */
+const stamp = (iso: string) => {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Seoul',
+    month: 'numeric',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(iso));
+  const at = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${at('month')}/${at('day')} ${at('hour')}:${at('minute')}`;
+};
+
 const th = 'whitespace-nowrap pb-2.5 text-center text-2xs font-semibold text-fg3';
 const td = 'tnum border-t border-hair py-2.5 text-center text-[12.5px] text-fg2';
 
@@ -25,6 +45,17 @@ export const ChampionshipOdds: React.FC<{ data: ChampionshipPrediction }> = ({ d
             {' · '}
             {data.iterations.toLocaleString()}회 시뮬레이션
           </p>
+          <p className="tnum mt-1 text-2xs text-fg3">
+            {data.dataAsOf ? `데이터 기준 ${shortDate(data.dataAsOf)} 경기 전` : '데이터 기준 시즌 종료'}
+            {' · '}
+            계산 {stamp(data.generatedAt)}
+          </p>
+          {data.staleDays > 0 && (
+            <p className="tnum mt-2 rounded-control bg-lose-soft px-3 py-2 text-2xs font-semibold text-lose">
+              네이버 응답이 {data.staleDays}일 지난 캐시입니다. 이 확률은 {shortDate(data.dataAsOf!)} 이후 경기
+              결과를 반영하지 못합니다.
+            </p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2.5">

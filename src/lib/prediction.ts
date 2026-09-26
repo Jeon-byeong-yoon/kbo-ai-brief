@@ -69,6 +69,41 @@ async function fetchRemainingGames(
   return out;
 }
 
+/**
+ * 네이버 팀 기록의 nextScheduleGameId 는 "20260926WOKT02026" 처럼 앞 8자리가 경기 날짜다.
+ * 아직 치르지 않은 경기 중 가장 이른 날짜를 데이터 기준일로 본다.
+ * 다만 이 필드는 조회한 연도와 무관하게 항상 "지금" 다음 경기를 가리키므로
+ * 진행 중인 시즌에만 의미가 있다.
+ *
+ * fetch 캐시는 stale-while-revalidate 라서, 갱신이 밀리면 낡은 응답이 그대로 나간다.
+ * 그때는 이 값도 같이 과거에 머무르므로 데이터가 며칠 밀렸는지 바로 드러난다.
+ * 계산 시각(generatedAt)은 매 요청 새로 찍히므로 신선도 지표가 될 수 없다.
+ */
+function dataFreshness(
+  teams: Raw[],
+  isCurrent: boolean,
+): { dataAsOf: string | null; staleDays: number } {
+  // nextScheduleGameId 는 어느 연도를 조회하든 그 팀의 "지금" 다음 경기를 가리킨다.
+  // 지난 시즌 기록에는 신선도 개념이 없으므로 쓰지 않는다.
+  if (!isCurrent) return { dataAsOf: null, staleDays: 0 };
+
+  const dates = teams
+    .map((t) => String(t.nextScheduleGameId ?? '').slice(0, 8))
+    .filter((d) => /^\d{8}$/.test(d))
+    .map((d) => `${d.slice(0, 4)}-${d.slice(4, 6)}-${d.slice(6, 8)}`)
+    .sort();
+
+  const dataAsOf = dates[0] ?? null;
+  if (!dataAsOf) return { dataAsOf: null, staleDays: 0 };
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (dataAsOf >= today) return { dataAsOf, staleDays: 0 };
+
+  const dayMs = 24 * 60 * 60 * 1000;
+  const diff = Math.floor((Date.parse(today) - Date.parse(dataAsOf)) / dayMs);
+  return { dataAsOf, staleDays: Math.max(0, diff) };
+}
+
 function toStrength(t: Raw, war: number): TeamStrength {
   const wins = num(t.winGameCount);
   const losses = num(t.loseGameCount);
@@ -325,6 +360,7 @@ export async function predictChampionship(
       regression: MODEL.regression,
       calibratedOn: MODEL.calibratedOn,
     },
+    ...dataFreshness(teams, isCurrent),
     generatedAt: new Date().toISOString(),
   };
 }
