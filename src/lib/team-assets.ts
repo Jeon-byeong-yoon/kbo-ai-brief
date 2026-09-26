@@ -167,21 +167,30 @@ TEAM_CODES.forEach((code) => {
   ] as const
 ).forEach(([alias, code]) => register(alias, code));
 
-// 네이버 스포츠 구단 코드
-(
-  [
-    ['OB', 'DOOSAN'],
-    ['WO', 'KIWOOM'],
-    ['HH', 'HANWHA'],
-    ['SS', 'SAMSUNG'],
-    ['HT', 'KIA'],
-    ['SK', 'SSG'],
-    ['LT', 'LOTTE'],
-    ['NC', 'NC'],
-    ['KT', 'KT'],
-    ['LG', 'LG'],
-  ] as const
-).forEach(([alias, code]) => register(alias, code));
+// 네이버 스포츠 구단 코드. 반대 방향(내부 코드 -> 네이버 코드)도 여기서 만든다.
+const NAVER_PAIRS = [
+  ['OB', 'DOOSAN'],
+  ['WO', 'KIWOOM'],
+  ['HH', 'HANWHA'],
+  ['SS', 'SAMSUNG'],
+  ['HT', 'KIA'],
+  ['SK', 'SSG'],
+  ['LT', 'LOTTE'],
+  ['NC', 'NC'],
+  ['KT', 'KT'],
+  ['LG', 'LG'],
+] as const;
+
+NAVER_PAIRS.forEach(([alias, code]) => register(alias, code));
+
+const NAVER_CODES = Object.fromEntries(
+  NAVER_PAIRS.map(([naver, code]) => [code, naver]),
+) as Record<TeamCode, string>;
+
+/** 내부 코드('SAMSUNG')를 네이버 스포츠 코드('SS')로 바꾼다. */
+export function naverCodeOf(code: TeamCode): string | null {
+  return NAVER_CODES[code] ?? null;
+}
 
 export function findTeam(...hints: Array<string | undefined | null>): TeamAsset | null {
   for (const hint of hints) {

@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { KBOTeamStanding } from '../types/kbo';
 import { TeamBadge } from './ui/TeamBadge';
 import { StarIcon } from './ui/Icons';
@@ -145,13 +146,15 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({
                         size={26}
                         radius={8}
                       />
-                      <span
-                        className={`truncate text-[12.5px] tracking-[-0.025em] text-fg ${
+                      <Link
+                        href={`/teams/${row.team.code}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`truncate text-[12.5px] tracking-[-0.025em] text-fg hover:text-accent hover:underline ${
                           isFavorite ? 'font-bold' : 'font-medium'
                         }`}
                       >
                         {row.team.name}
-                      </span>
+                      </Link>
                       {isFavorite && <StarIcon size={10} className="shrink-0 text-accent" />}
                     </div>
                   </td>

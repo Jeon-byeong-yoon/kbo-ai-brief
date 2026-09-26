@@ -6,7 +6,7 @@ const HEADERS = {
   Referer: 'https://sports.naver.com/',
 };
 
-interface ScheduleGame {
+export interface ScheduleGame {
   gameId: string;
   gameDate: string;
   homeTeamCode: string;
@@ -97,6 +97,33 @@ function findRegularSeason(games: ScheduleGame[], official: Map<string, Record3>
   }
 
   return null;
+}
+
+/**
+ * 그 시즌의 정규시즌 경기만 돌려준다. 팀 페이지의 월별 성적·최근 경기도
+ * 같은 구간을 써야 순위표와 숫자가 맞는다.
+ */
+export async function fetchRegularSeasonGames(year: number): Promise<ScheduleGame[] | null> {
+  const isCurrent = year >= new Date().getFullYear();
+  const revalidate = isCurrent ? 60 * 60 : 60 * 60 * 24 * 7;
+
+  const standings = await fetchJson(
+    `https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/teams`,
+    revalidate,
+  );
+  const teams: Array<Record<string, any>> = standings?.result?.seasonTeamStats ?? [];
+  if (teams.length === 0) return null;
+
+  const official = new Map<string, Record3>(
+    teams.map((t) => [
+      String(t.teamId),
+      [Number(t.winGameCount) || 0, Number(t.loseGameCount) || 0, Number(t.drawnGameCount) || 0],
+    ]),
+  );
+
+  const all = await fetchSeasonGames(year, revalidate);
+  const clubGames = all.filter((g) => official.has(g.homeTeamCode) && official.has(g.awayTeamCode));
+  return findRegularSeason(clubGames, official);
 }
 
 export async function fetchHeadToHead(year: number): Promise<HeadToHead | null> {
