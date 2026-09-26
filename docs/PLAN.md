@@ -10,3 +10,29 @@
 | **선수 세부 기록** | 네이버 스포츠 주요 지표 기반 투수(양현종/류현진/원태인) & 타자(김도영 38홈런/구자욱) Top 5 랭킹 |  완료 |
 | **2025 전년도 성적** | 2025년 최종 순위 및 포스트시즌 진출 결과 표출 |  완료 |
 | **AI 브리핑 모달** | 경기 관전 포인트(Preview) 및 실시간/경기후 요약(Review) 모달 UI |  완료 |
+
+## 2026-09 구현 현황
+
+| 기능 | 경로 | 상태 |
+| :--- | :--- | :--- |
+| 애플/토스 기반 UI 전면 개편, 라이트·다크 테마 | 전역 | 완료 |
+| 날짜별 경기 일정 (월 단위 스트립, 경기 유무 표시) | `/` | 완료 |
+| AI 프리뷰 키플레이어 비교 + HOT/COLD ZONE | 대시보드 모달 | 완료 |
+| 기록실 — 2008~2026 팀·선수 기록 | `/records` | 완료 |
+| 팀간 상대전적 10x10 매트릭스 | `/records` | 완료 |
+| 경기 상세 실시간 중계 (볼카운트·주자·승리확률) | `/games/[id]` | 완료 |
+| 우승 확률 예측 | 미정 | 진행 예정 |
+
+### 정리한 것
+
+- 빌드를 막던 죽은 코드를 걷어냈다. `/standings` 페이지, `/api/games/today`,
+  `/api/games/[id]/ai-preview`, `/api/games/[id]/ai-review`, 그리고 이들만 쓰던
+  `AiContent`·`GameCard`·`TeamLogo`·`StatusBadge`·`LoadingSpinner` 컴포넌트와
+  `lib/prisma.ts` 더미. 전부 어디서도 참조하지 않았고 prisma 미설치로 타입체크를
+  막고 있었다.
+- `prisma/schema.prisma` 와 `prisma.config.ts` 는 이후 DB 도입을 위해 남겨 두고
+  tsconfig 의 exclude 로만 뺐다.
+- `lib/openai.ts` 의 `dangerouslyAllowSVG` 를 제거했다. next/image 옵션이 OpenAI
+  클라이언트 설정에 잘못 들어가 있었다.
+
+이제 `npm run build` 가 통과한다.
