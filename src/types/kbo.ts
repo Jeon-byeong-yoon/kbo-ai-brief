@@ -1,3 +1,5 @@
+import { MagicNumber } from '@/types/magic-number';
+
 // KBO AI Brief Core Types
 export type GameStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED' | 'POSTPONED' | 'CANCELLED';
 
@@ -111,6 +113,8 @@ export interface KBOTeamStanding {
   winRate: number;
   gameBehind: number; // 승차
   recent10: string; // e.g. '7승3패'
+  /** 매직넘버 / 트래직넘버. 시즌 중에만 의미가 있다 */
+  magic?: MagicNumber;
   streak: string; // e.g. '3연승'
 }
 

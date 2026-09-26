@@ -1,5 +1,20 @@
 import { NextResponse } from 'next/server';
 import { KBOTeamStanding, KBOTeam } from '@/types/kbo';
+import { calculateMagicNumbers } from '@/lib/magic-number';
+
+/** 순위표에 매직넘버를 붙인다. 계산은 승·패·무만 있으면 된다. */
+function withMagic(rows: KBOTeamStanding[]): KBOTeamStanding[] {
+  const magic = calculateMagicNumbers(
+    rows.map((r) => ({
+      code: r.team.code,
+      wins: r.wins,
+      losses: r.losses,
+      draws: r.draws,
+    })),
+  );
+  const byCode = new Map(magic.map((m) => [m.teamCode, m]));
+  return rows.map((r) => ({ ...r, magic: byCode.get(r.team.code) }));
+}
 
 // 팀 ID 및 스타일 매핑
 const TEAM_MAP: Record<string, KBOTeam> = {
@@ -78,7 +93,7 @@ export async function GET() {
       return NextResponse.json({
         success: true,
         data: {
-          standings: real2026Standings,
+          standings: withMagic(real2026Standings),
           historical2025,
         },
       });
@@ -104,7 +119,7 @@ export async function GET() {
   return NextResponse.json({
     success: true,
     data: {
-      standings: real2026Fallback,
+      standings: withMagic(real2026Fallback),
       historical2025: {
         year: 2025,
         champion: 'LG 트윈스',
