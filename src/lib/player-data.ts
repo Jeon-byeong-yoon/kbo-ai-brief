@@ -124,6 +124,7 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
 
   const pitchers: PitcherLeader[] = rawPitchers.map((player, index) => ({
     rank: player.ranking ?? index + 1,
+    playerId: player.playerId,
     name: player.playerName,
     team: fullTeamName(player),
     era: player.pitcherEra ?? 0,
@@ -137,6 +138,7 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
 
   const batters: BatterLeader[] = rawBatters.map((player, index) => ({
     rank: player.ranking ?? index + 1,
+    playerId: player.playerId,
     name: player.playerName,
     team: fullTeamName(player),
     avg: player.hitterHra ?? 0,
@@ -149,6 +151,7 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
   const searchPlayers: PlayerSearchResult[] = [
     ...rawBatters.map((player) => ({
       id: `batter-${player.playerId}`,
+      playerId: player.playerId,
       name: player.playerName,
       team: fullTeamName(player),
       teamCode: TEAM_CODES[player.teamId] ?? player.teamId,
@@ -170,6 +173,7 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
     })),
     ...rawPitchers.map((player) => ({
       id: `pitcher-${player.playerId}`,
+      playerId: player.playerId,
       name: player.playerName,
       team: fullTeamName(player),
       teamCode: TEAM_CODES[player.teamId] ?? player.teamId,

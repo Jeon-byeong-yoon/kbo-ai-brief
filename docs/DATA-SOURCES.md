@@ -183,6 +183,47 @@ GET /statistics/categories/kbo/seasons/{year}/players?playerType=PITCHER
   `pitcherEra`, `pitcherWhip` 등 지표가 들어 있다. `playerImageUrl` 도 오지만
   위의 이유로 쓰지 않는다.
 
+## 선수 커리어 — 전용 API 가 없어 연도별 목록에서 모은다
+
+선수 개인 상세 엔드포인트는 전부 막혀 있다.
+
+| 시도 | 결과 |
+| :--- | :--- |
+| `/statistics/categories/kbo/players/{id}` | HTTP 403 |
+| `/statistics/players/{id}` | HTTP 403 |
+| `/statistics/categories/kbo/players/{id}/seasons` | 200 이지만 `playerSeasonStats` 가 항상 비어 있다 |
+| `/statistics/categories/kbo/teams/{code}/players` | HTTP 403 |
+
+그래서 **2008년부터 올해까지 연도별 선수 목록을 타자·투수 양쪽으로 받아
+`playerId` 로 걸러낸다.** `playerId` 는 문자열이고 연도가 바뀌어도 같다
+(구자욱 `62404` 를 2015~2026 까지 추적해 확인했다).
+
+호출이 38회라 많아 보이지만 한 번에 0.1초, 전부 합쳐 1.4초 남짓이다(동시 6개 기준).
+끝난 시즌은 일주일, 진행 중인 시즌은 10분 캐시한다.
+
+`profile` 필드는 JSON 문자열이라 파싱해야 한다. 이름·팀·포지션·등번호·은퇴 여부가
+들어 있다. `image` 키에 선수 사진 URL 도 있지만 **쓰지 않는다**. 네이버가 Referer 로
+핫링크를 막아 두었고, 우회하지 않기로 했다.
+
+### 고급 지표는 2017년부터만 있다
+
+WAR, wRC+, wOBA, WPA, BABIP 는 2017년 이후 시즌에만 들어 있다. 그 전 시즌은
+`0` 으로 오는데, **이걸 실제 값 0 으로 받으면 안 된다.**
+
+| 시즌 | 타자 WAR 합 | 투수 WAR 합 |
+| :--- | ---: | ---: |
+| 2008~2013 | 0.0 | 0.0 |
+| 2014~2016 | 0.0 | 110~143 |
+| 2017~2026 | 205~239 | 130~150 |
+
+화면에서는 빈 칸(—)으로 두고 이유를 적는다. 우승 확률 모델이 이 값을 어떻게
+다루는지는 `docs/PREDICTION.md` 참고.
+
+### `pitcherInning` 은 타입이 섞여 온다
+
+숫자(`155`)로 올 때도 있고 `"138 2/3"` 같은 문자열로 올 때도 있다. 합산하려면
+아웃 수로 바꿔야 한다. `Number()` 를 그냥 쓰면 NaN 이 된다.
+
 ## 과거 구단명
 
 지난 시즌을 조회하면 그 시절 구단명이 그대로 온다 — 2008~2018 은 `넥센`,

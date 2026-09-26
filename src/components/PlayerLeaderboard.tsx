@@ -1,8 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { PitcherLeader, BatterLeader } from '../types/kbo';
 import { TeamBadge } from './ui/TeamBadge';
+
+/** 선수 이름을 커리어 페이지로 잇는다. playerId 가 없으면 링크 없이 이름만 보여준다. */
+const PlayerName: React.FC<{ playerId: string; name: string }> = ({ playerId, name }) => {
+  const cls = 'truncate text-[13px] font-semibold tracking-[-0.02em] text-fg';
+  if (!playerId) return <span className={cls}>{name}</span>;
+  return (
+    <Link href={`/players/${playerId}`} className={`${cls} hover:text-accent hover:underline`}>
+      {name}
+    </Link>
+  );
+};
 
 interface PlayerLeaderboardProps {
   pitcherLeaders: PitcherLeader[];
@@ -90,9 +102,7 @@ export const PlayerLeaderboard: React.FC<PlayerLeaderboardProps> = ({
                   <td className="border-t border-hair py-2.5">
                     <div className="flex min-w-0 items-center gap-2 pr-2">
                       <TeamBadge team={p.team} fallbackLabel={p.team} size={24} radius={7} />
-                      <span className="truncate text-[13px] font-semibold tracking-[-0.02em] text-fg">
-                        {p.name}
-                      </span>
+                      <PlayerName playerId={p.playerId} name={p.name} />
                     </div>
                   </td>
                   <td className={`${td} font-bold text-fg`}>{p.era.toFixed(2)}</td>
@@ -135,9 +145,7 @@ export const PlayerLeaderboard: React.FC<PlayerLeaderboardProps> = ({
                   <td className="border-t border-hair py-2.5">
                     <div className="flex min-w-0 items-center gap-2 pr-2">
                       <TeamBadge team={b.team} fallbackLabel={b.team} size={24} radius={7} />
-                      <span className="truncate text-[13px] font-semibold tracking-[-0.02em] text-fg">
-                        {b.name}
-                      </span>
+                      <PlayerName playerId={b.playerId} name={b.name} />
                     </div>
                   </td>
                   <td className={`${td} font-bold text-fg`}>{b.avg.toFixed(3).replace(/^0/, '')}</td>

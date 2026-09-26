@@ -84,7 +84,10 @@ export interface KBOGame {
 }
 
 export interface PlayerSearchResult {
+  /** 타자/투수 구분이 섞인 목록이라 접두어를 붙인 값. 목록 key 로만 쓴다 */
   id: string;
+  /** 네이버 선수 번호. 선수 상세로 이동할 때 쓴다 */
+  playerId: string;
   name: string;
   team: string;
   teamCode: string;
@@ -113,6 +116,7 @@ export interface KBOTeamStanding {
 
 export interface PitcherLeader {
   rank: number;
+  playerId: string;
   name: string;
   team: string;
   era: number;
@@ -126,6 +130,7 @@ export interface PitcherLeader {
 
 export interface BatterLeader {
   rank: number;
+  playerId: string;
   name: string;
   team: string;
   avg: number;

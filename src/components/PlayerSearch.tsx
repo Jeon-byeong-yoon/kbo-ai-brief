@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { KeyboardEvent, useEffect, useState } from 'react';
 import { PlayerSearchResult } from '@/types/kbo';
 import { TeamBadge } from './ui/TeamBadge';
@@ -143,16 +144,28 @@ export function PlayerSearch() {
               <span className="text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
                 {selected.playerType === 'PITCHER' ? '투수' : '타자'}
               </span>
-              <h3 className="text-[19px] font-bold tracking-[-0.03em] text-fg">{selected.name}</h3>
+              <h3 className="text-[19px] font-bold tracking-[-0.03em] text-fg">
+                <Link href={`/players/${selected.playerId}`} className="hover:text-accent hover:underline">
+                  {selected.name}
+                </Link>
+              </h3>
               <p className="text-xs text-fg2">
                 {selected.team} · {selected.position}
               </p>
             </div>
           </div>
 
-          <h4 className="mb-2 mt-4 text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
-            {selected.seasonYear} 시즌 누적
-          </h4>
+          <div className="mb-2 mt-4 flex items-baseline justify-between gap-2">
+            <h4 className="text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
+              {selected.seasonYear} 시즌 누적
+            </h4>
+            <Link
+              href={`/players/${selected.playerId}`}
+              className="text-2xs font-semibold text-accent hover:underline"
+            >
+              통산 기록
+            </Link>
+          </div>
           <dl className="grid grid-cols-3 gap-2 sm:grid-cols-5">
             {selected.stats.map((stat) => (
               <div key={stat.label} className="rounded-chip bg-surface2 px-2 py-2.5 text-center">
