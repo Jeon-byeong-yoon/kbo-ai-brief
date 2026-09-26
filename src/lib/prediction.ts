@@ -104,7 +104,26 @@ function dataFreshness(
   return { dataAsOf, staleDays: Math.max(0, diff) };
 }
 
-function toStrength(t: Raw, war: number): TeamStrength {
+type DepthCoverage = 'full' | 'pitcher-only' | 'none';
+
+/**
+ * 뎁스를 리그 평균 기준으로 환산한다. 평균 팀이 .500 이 되도록 중심을 맞춘 뒤
+ * WAR 차이를 승수 차이로 본다. 절대 수준이 아니라 팀 간 차이만 쓰는 셈이다.
+ *
+ * 이렇게 하지 않으면 시즌마다 WAR 총량이 달라서 뎁스 항이 리그 전체를 위아래로
+ * 밀어 버린다. 실제로 투수 WAR 만 있는 2014~2016 은 리그 평균 뎁스가 .392,
+ * 둘 다 있는 2017년 이후는 .531 로 나와 서로 다른 모델이 된다.
+ */
+function depthRate(war: number, leagueMeanWar: number): number {
+  return 0.5 + (war - leagueMeanWar) / MODEL.seasonGames;
+}
+
+function toStrength(
+  t: Raw,
+  war: number,
+  leagueMeanWar: number,
+  coverage: DepthCoverage,
+): TeamStrength {
   const wins = num(t.winGameCount);
   const losses = num(t.loseGameCount);
   const draws = num(t.drawnGameCount);
@@ -119,10 +138,16 @@ function toStrength(t: Raw, war: number): TeamStrength {
       ? runs ** e / (runs ** e + runsAllowed ** e)
       : 0.5;
   const actualWinRate = wins + losses > 0 ? wins / (wins + losses) : 0.5;
-  const depthWinRate = (MODEL.replacementWins + war) / MODEL.seasonGames;
+  const hasDepth = coverage !== 'none';
+  const depthWinRate = hasDepth ? depthRate(war, leagueMeanWar) : 0.5;
 
+  // 뎁스를 못 쓰는 시즌에는 상수를 섞지 않는다. 그러면 전력 격차만 30% 줄어든다.
+  // 대신 남은 두 항끼리 가중치를 다시 1 로 맞춘다.
   const { pythagorean: wp, actual: wa, depth: wd } = MODEL.weights;
-  const blended = pythagoreanWinRate * wp + actualWinRate * wa + depthWinRate * wd;
+  const sum = hasDepth ? 1 : wp + wa;
+  const blended = hasDepth
+    ? pythagoreanWinRate * wp + actualWinRate * wa + depthWinRate * wd
+    : (pythagoreanWinRate * wp + actualWinRate * wa) / sum;
   const talent = 0.5 + (blended - 0.5) * (1 - MODEL.regression);
 
   return {
@@ -138,6 +163,7 @@ function toStrength(t: Raw, war: number): TeamStrength {
     pythagoreanWinRate,
     depthWinRate,
     totalWar: war,
+    officialWinRate: num(t.wra),
     talent: Math.min(0.8, Math.max(0.2, talent)),
   };
 }
@@ -261,16 +287,32 @@ export async function predictChampionship(
   // 팀별 WAR 합 (선수 뎁스). shortName 으로 묶인다.
   const war = new Map<string, number>();
   const addWar = (rows: Raw[] | undefined, key: string) => {
+    let total = 0;
     for (const p of rows ?? []) {
       const name = String(p.teamShortName || p.teamName);
-      war.set(name, (war.get(name) ?? 0) + num(p[key]));
+      const v = num(p[key]);
+      war.set(name, (war.get(name) ?? 0) + v);
+      total += v;
     }
+    return total;
   };
-  addWar(hittersJson?.result?.seasonPlayerStats, 'hitterWar');
-  addWar(pitchersJson?.result?.seasonPlayerStats, 'pitcherWar');
+  const hitterTotal = addWar(hittersJson?.result?.seasonPlayerStats, 'hitterWar');
+  const pitcherTotal = addWar(pitchersJson?.result?.seasonPlayerStats, 'pitcherWar');
 
-  const strengths = teams.map((t) =>
-    toStrength(t, war.get(String(t.teamShortName || t.teamName)) ?? 0),
+  // 네이버는 WAR 을 2017년부터만 준다. 2014~2016 은 투수만 있고 그 전은 아예 없다.
+  // 없는 값을 0 으로 받아 그대로 쓰면 전 팀이 같은 뎁스를 갖게 되므로 구분해서 다룬다.
+  const depthCoverage: DepthCoverage =
+    hitterTotal > 0 && pitcherTotal > 0
+      ? 'full'
+      : pitcherTotal > 0 || hitterTotal > 0
+        ? 'pitcher-only'
+        : 'none';
+
+  const teamWars = teams.map((t) => war.get(String(t.teamShortName || t.teamName)) ?? 0);
+  const leagueMeanWar = teamWars.reduce((a, b) => a + b, 0) / (teamWars.length || 1);
+
+  const strengths = teams.map((t, i) =>
+    toStrength(t, teamWars[i], leagueMeanWar, depthCoverage),
   );
   const byCode = new Map(strengths.map((s) => [s.teamCode, s]));
   const codes = [...byCode.keys()];
@@ -326,7 +368,12 @@ export async function predictChampionship(
     for (const seed of finalists) finals[seeds[seed]] += 1;
   }
 
-  const ranked = [...strengths].sort((a, b) => b.actualWinRate - a.actualWinRate);
+  // 정규시즌 순위는 네이버의 wra 로 매긴다. 직접 승/(승+패) 로 계산하면 무승부를
+  // 승률에 넣던 시절(2009년 KIA 81승 4무 48패 vs SK 80승 6무 47패)이 뒤집힌다.
+  // 팀 기록의 ranking 필드는 포스트시즌까지 반영한 최종 순위라 쓸 수 없다.
+  const ranked = [...strengths].sort(
+    (a, b) => b.officialWinRate - a.officialWinRate || b.actualWinRate - a.actualWinRate,
+  );
   const rankOf = new Map(ranked.map((s, i) => [s.teamCode, i + 1]));
 
   const outcomes: TeamOutcome[] = codes
@@ -350,6 +397,7 @@ export async function predictChampionship(
   return {
     year,
     iterations,
+    depthCoverage,
     gamesRemaining: remaining.length,
     regularSeasonOver: remaining.length === 0,
     teams: outcomes,

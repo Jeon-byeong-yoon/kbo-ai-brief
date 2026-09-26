@@ -4,6 +4,12 @@ import React from 'react';
 import { ChampionshipPrediction } from '@/types/prediction';
 import { TeamBadge } from '@/components/ui/TeamBadge';
 
+const DEPTH_NOTE: Record<string, string> = {
+  'pitcher-only':
+    '이 시즌은 네이버에 투수 WAR 만 있어 뎁스를 투수 전력으로만 계산했습니다. 타자 뎁스는 반영되지 않았습니다.',
+  none: '이 시즌은 네이버에 WAR 이 없어 뎁스를 쓰지 못했습니다. 피타고리안과 실제 승률만으로 계산했습니다.',
+};
+
 const pct = (n: number) => (n >= 10 ? n.toFixed(0) : n >= 1 ? n.toFixed(1) : n > 0 ? '<1' : '0');
 const rate = (n: number) => n.toFixed(3).replace(/^0/, '');
 
@@ -50,6 +56,11 @@ export const ChampionshipOdds: React.FC<{ data: ChampionshipPrediction }> = ({ d
             {' · '}
             계산 {stamp(data.generatedAt)}
           </p>
+          {DEPTH_NOTE[data.depthCoverage] && (
+            <p className="mt-2 rounded-control bg-surface2 px-3 py-2 text-2xs text-fg2">
+              {DEPTH_NOTE[data.depthCoverage]}
+            </p>
+          )}
           {data.staleDays > 0 && (
             <p className="tnum mt-2 rounded-control bg-lose-soft px-3 py-2 text-2xs font-semibold text-lose">
               네이버 응답이 {data.staleDays}일 지난 캐시입니다. 이 확률은 {shortDate(data.dataAsOf!)} 이후 경기
