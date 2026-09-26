@@ -179,6 +179,21 @@
   background: var(--team-bg);
 }
 
+/* 순위 변동 그래프의 선. 배지와 같은 방식으로 구단 상징색을 쓴다. */
+.team-line {
+  stroke: var(--team-fg);
+}
+
+:root[data-theme='dark'] .team-line {
+  stroke: var(--team-fg-dark);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .team-line {
+    stroke: var(--team-fg-dark);
+  }
+}
+
 :root[data-theme='dark'] .team-badge {
   color: var(--team-fg-dark);
   background: var(--team-bg-dark);
