@@ -30,8 +30,31 @@ GET /schedule/games?fromDate={YYYY-MM-DD}&toDate={YYYY-MM-DD}&upperCategoryId=kb
 | 경로 | 내용 |
 | --- | --- |
 | `/schedule/games/{gameId}/preview` | 경기 프리뷰 (아래 참고) |
+| `/schedule/games/{gameId}/relay` | 실시간 중계 (아래 참고) |
 | `/schedule/games/{gameId}/record` | 경기 기록 |
 | `/schedule/games/{gameId}/lineup` | 라인업 |
+
+경기 헤더(`/schedule/games/{gameId}`)에는 `awayTeamScoreByInning`(아직 안 친 이닝은
+`"-"`), `awayTeamRheb`(`[득점, 안타, 실책, 사사구]`), `winPitcherName`,
+`losePitcherName`, `weatherInfo` 가 들어 있다.
+
+### `/relay` 의 `textRelayData` — 실시간 경기 상황
+
+- `currentGameState` — **투구마다 갱신된다.** `ball`·`strike`·`out`(볼카운트),
+  `base1`·`base2`·`base3`(주자), `pitcher`·`batter`(선수 코드), 양 팀 R/H/E/B
+- `homeOrAway` — 지금 공격 중인 쪽 (`0` 원정, `1` 홈)
+- `homeLineup`/`awayLineup` — `batter[]` 는 타순·포지션·오늘 성적·시즌 타율·
+  해당 투수 상대 타율, `pitcher[]` 는 이닝·투구수·탈삼진·자책·시즌 ERA
+- `pitcherVsBatterCareerStats` — 지금 맞붙은 투수와 타자의 통산 전적 문구
+- `lastValidMetricOption` — 네이버가 계산한 **실시간 승리 확률**
+- `textRelays[]` — 이닝별 텍스트 중계
+
+**타순의 `seqno` 는 1부터 시작한다는 보장이 없다.** 어떤 팀은 2부터 시작한다.
+교체 선수까지 함께 오므로 같은 타순 번호가 여러 번 나오는데, 선발을 가릴 때는
+절대값이 아니라 **타순별로 `seqno` 가 가장 작은 선수**를 봐야 한다.
+
+진행 중인 경기는 캐시하면 안 된다(`cache: 'no-store'`). 끝난 경기는 더 이상
+바뀌지 않는다.
 
 ### `/preview` 의 `previewData`
 
@@ -86,7 +109,10 @@ GET /statistics/categories/kbo/seasons/{year}/players?playerType=PITCHER
 - **`playerType` 은 대문자여야 한다.** `hitter` 처럼 소문자로 주면 400 이다.
   빠뜨려도 400 (`지원하지 않는 playerType 입니다`).
 - **2007 시즌부터** 데이터가 있다. 2005 이하는 빈 배열.
-- 시즌별 **상위 50명**만 온다.
+- 기본은 상위 50명이지만 **`pageSize` 로 더 받을 수 있다.** `pageSize=500` 이면
+  2026 기준 타자 359명·투수 293명(팀당 24~41명)으로 사실상 전체 로스터가 나온다.
+  과거 시즌도 마찬가지다(2015 타자 378명, 2008 타자 273명). `size`·`limit`·`count`
+  는 먹지 않고 `pageSize` 만 듣는다. 1000 이상은 400 이다.
 - **규정 타석·이닝 미달 선수는 `ranking` 이 `null` 로 온다.** 이걸 0 으로 바꿔
   정렬하면 8경기 1안타 타율 1.000 같은 선수가 1위로 올라온다. `isQualified` 로
   거르거나 `ranking` 이 있는 행만 쓴다.
