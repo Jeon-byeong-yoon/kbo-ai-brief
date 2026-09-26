@@ -15,6 +15,7 @@ interface HeaderProps {
 const NAV = [
   { href: '/', label: '대시보드' },
   { href: '/records', label: '기록실' },
+  { href: '/predictions', label: '우승 확률' },
 ];
 
 export const Header: React.FC<HeaderProps> = ({ favoriteTeam, onFavoriteTeamChange }) => {
