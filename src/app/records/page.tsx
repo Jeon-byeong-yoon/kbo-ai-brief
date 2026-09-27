@@ -9,15 +9,18 @@ import {
   SeasonTeamStats,
 } from '@/components/records/SeasonTables';
 import { SeasonHeadToHead } from '@/components/records/SeasonHeadToHead';
+import { RankHistory } from '@/components/records/RankHistory';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/Icons';
 import { FIRST_SEASON, SeasonRecords } from '@/types/season';
 import { HeadToHead } from '@/types/head-to-head';
+import { RankHistory as RankHistoryData } from '@/types/rank-history';
 
-type Tab = 'TEAM_RANK' | 'TEAM_STATS' | 'HEAD_TO_HEAD' | 'HITTERS' | 'PITCHERS';
+type Tab = 'TEAM_RANK' | 'RANK_HISTORY' | 'TEAM_STATS' | 'HEAD_TO_HEAD' | 'HITTERS' | 'PITCHERS';
 
 const TABS: Array<{ value: Tab; label: string }> = [
   { value: 'TEAM_RANK', label: '팀 순위' },
   { value: 'TEAM_STATS', label: '팀 기록' },
+  { value: 'RANK_HISTORY', label: '순위 변동' },
   { value: 'HEAD_TO_HEAD', label: '상대전적' },
   { value: 'HITTERS', label: '타자 기록' },
   { value: 'PITCHERS', label: '투수 기록' },
@@ -51,6 +54,10 @@ export default function RecordsPage() {
   // 탭을 실제로 열었을 때만 부르고, 연도별로 들고 있는다.
   const [headToHead, setHeadToHead] = useState<HeadToHead | null>(null);
   const [h2hState, setH2hState] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  // 순위 변동도 같은 이유로 무겁다. 탭을 열었을 때만 부른다.
+  const [rankHistory, setRankHistory] = useState<RankHistoryData | null>(null);
+  const [rankState, setRankState] = useState<'idle' | 'loading' | 'error'>('idle');
 
   // 관심 구단은 대시보드와 같은 저장소를 쓴다.
   const [favoriteTeam, setFavoriteTeam] = useState('NONE');
@@ -122,6 +129,37 @@ export default function RecordsPage() {
       alive = false;
     };
   }, [tab, year, headToHead?.year]);
+
+  useEffect(() => {
+    if (tab !== 'RANK_HISTORY') return;
+    if (rankHistory?.year === year) return;
+
+    let alive = true;
+    setRankState('loading');
+
+    fetch(`/api/seasons/${year}/rank-history`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!alive) return;
+        if (json.success) {
+          setRankHistory(json.data);
+          setRankState('idle');
+        } else {
+          setRankHistory(null);
+          setRankState('error');
+        }
+      })
+      .catch(() => {
+        if (alive) {
+          setRankHistory(null);
+          setRankState('error');
+        }
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, [tab, year, rankHistory?.year]);
 
   const years = useMemo(
     () => Array.from({ length: latestSeason - FIRST_SEASON + 1 }, (_, i) => latestSeason - i),
@@ -227,6 +265,19 @@ export default function RecordsPage() {
                     </p>
                   ) : (
                     <SeasonHeadToHead data={headToHead} />
+                  ))}
+                {tab === 'RANK_HISTORY' &&
+                  (rankState === 'loading' ? (
+                    <div className="py-20 text-center">
+                      <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-line border-t-accent" />
+                      <p className="text-[13px] text-fg2">시즌 일정을 날짜순으로 쌓는 중입니다</p>
+                    </div>
+                  ) : rankState === 'error' || !rankHistory ? (
+                    <p className="py-20 text-center text-[13px] text-fg2">
+                      이 시즌의 순위 변동을 만들지 못했습니다.
+                    </p>
+                  ) : (
+                    <RankHistory data={rankHistory} />
                   ))}
                 {tab === 'HITTERS' && <SeasonHitters rows={records.hitters} />}
                 {tab === 'PITCHERS' && <SeasonPitchers rows={records.pitchers} />}

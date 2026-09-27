@@ -108,18 +108,13 @@
 - 중계 채널 `KBS N SPORTS^SBS SPORTS` → `KBS N SPORTS · SBS SPORTS` 로 분리.
 - 헤더 날짜 선택을 좁은 화면에서 둘째 줄로 내려 모바일에서도 쓸 수 있게 했다.
 
-## 남아 있는 문제 (이번 개편 범위 밖, 이전부터 있던 것)
+## 남아 있는 문제
 
-- `npm run build` 가 타입체크에서 실패한다.
-  `prisma.config.ts:1` → `Cannot find module 'prisma/config'`. prisma 패키지가
-  설치돼 있지 않다. 컴파일 자체는 통과한다.
-- `/games/[id]` 상세가 실제 경기로는 열리지 않는다. 목록 API 는 네이버
-  ID(`20260916SSOB02026`)를 주는데 `src/app/api/games/[id]/route.ts` 는
-  `game-20260723-1` 같은 하드코딩 목업 ID 만 알고 있다.
-- `/standings` 페이지가 500. `src/lib/prisma.ts` 가 Phase 1 더미라 `null` 이다.
-- `src/lib/openai.ts:9` 에 `dangerouslyAllowSVG: true` — next/image 옵션이 OpenAI
-  클라이언트 설정에 잘못 들어가 있어 타입 에러가 난다.
-- 안 쓰이는 레거시 컴포넌트가 남아 있다: `ui/TeamLogo`, `ui/StatusBadge`,
-  `ui/LoadingSpinner`, `game/GameCard`, `game/AiContent`. 이미 없어진 CSS
-  클래스를 참조한다.
+- `next: { revalidate }` 를 쓰는 라우트가 오래된 값을 계속 내줄 수 있다. 개발 서버를
+  오래 띄워 뒀을 때 11일 전 순위가 나온 적이 있다. 원인은 Next 의 시간 기반 재검증이
+  stale-while-revalidate 라는 데 있다 (`node_modules/next/dist/docs/01-app/02-guides/how-revalidation-works.md`).
+  기한이 지나도 들어온 요청에게는 낡은 값을 그대로 주고 갱신은 뒤에서 돈다. 그래서
+  (1) 요청이 없으면 갱신도 없고, (2) 갱신을 유발한 사람은 낡은 값을 보며,
+  (3) 갱신이 실패하면 낡은 값이 조용히 남는다. 우승 확률 화면에는 데이터 기준일을
+  띄워 최소한 눈에 보이게 해 뒀다. 근본 대응인 태그 기반 무효화는 배포 때 붙인다.
 - eslint 가 설치돼 있지 않고, `next lint` 는 Next 16 에서 제거됐다.

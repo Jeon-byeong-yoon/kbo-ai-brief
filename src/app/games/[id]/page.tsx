@@ -1,52 +1,194 @@
 'use client';
 
-import React, { useState, useEffect, use } from 'react';
+import React, { useCallback, useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { KBOGame } from '@/types/kbo';
-import { GamePlayerHighlight } from '@/components/game/GamePlayerHighlight';
+import { GameDetail } from '@/lib/game-detail';
 import { TeamBadge } from '@/components/ui/TeamBadge';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { ArrowRightIcon, SparkIcon } from '@/components/ui/Icons';
+import { ArrowRightIcon } from '@/components/ui/Icons';
+import { LiveCount, LiveMatchup, LiveWinRate } from '@/components/game/LiveScoreboard';
+import { LineupEntry, PitcherLine } from '@/types/live';
+import { GamePitches } from '@/types/pitch';
+import { StrikeZone } from '@/components/game/StrikeZone';
 
-type DetailTab = 'AI_REPORT' | 'LINEUP' | 'HEAD_TO_HEAD';
+type Tab = 'LINEUP' | 'PITCHERS' | 'PITCHES';
 
-const DETAIL_TABS: Array<{ value: DetailTab; label: string }> = [
-  { value: 'AI_REPORT', label: 'AI 리포트' },
-  { value: 'LINEUP', label: '라인업' },
-  { value: 'HEAD_TO_HEAD', label: '상대 전적' },
+const TABS: Array<{ value: Tab; label: string }> = [
+  { value: 'LINEUP', label: '타순' },
+  { value: 'PITCHERS', label: '투수' },
+  { value: 'PITCHES', label: '투구 위치' },
 ];
 
-export default function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const resolvedParams = use(params);
-  const gameId = resolvedParams.id;
+const th = 'whitespace-nowrap pb-2.5 text-center text-2xs font-semibold text-fg3';
+const td = 'tnum border-t border-hair py-2.5 text-center text-[12.5px] text-fg2';
 
-  const [game, setGame] = useState<KBOGame | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<DetailTab>('AI_REPORT');
+function LineupTable({ rows, title }: { rows: LineupEntry[]; title: string }) {
+  if (!rows.length) {
+    return (
+      <section className="rounded-card border border-line bg-surface p-8 text-center shadow-card">
+        <p className="text-[13px] text-fg3">{title} 타순이 아직 공개되지 않았습니다.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-card border border-line bg-surface px-5 pb-4 pt-4 shadow-card">
+      <h5 className="mb-3 text-[13.5px] font-bold tracking-[-0.025em] text-fg">{title}</h5>
+      <div className="custom-scrollbar -mx-1 overflow-x-auto px-1">
+        <table className="w-full border-collapse" style={{ minWidth: 420 }}>
+          <thead>
+            <tr>
+              <th className={`${th} w-9`}>타순</th>
+              <th className={`${th} text-left`}>선수</th>
+              <th className={th}>타수</th>
+              <th className={th}>안타</th>
+              <th className={th}>타점</th>
+              <th className={th}>득점</th>
+              <th className={th}>볼넷</th>
+              <th className={th}>삼진</th>
+              <th className={th}>시즌</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={`${row.order}-${row.seqno}-${i}`} className="transition-colors hover:bg-surface2">
+                <td className={td}>
+                  {row.isStarter ? row.order : <span className="text-fg3">└</span>}
+                </td>
+                <td className="border-t border-hair py-2.5">
+                  <div className="flex min-w-0 items-center gap-2 pr-2">
+                    <span className="truncate text-[13px] font-semibold tracking-[-0.02em] text-fg">
+                      {row.name}
+                    </span>
+                    <span className="shrink-0 text-2xs text-fg3">{row.position}</span>
+                  </div>
+                </td>
+                <td className={td}>{row.atBats}</td>
+                <td className={`${td} font-semibold text-fg`}>{row.hits}</td>
+                <td className={td}>{row.rbi}</td>
+                <td className={td}>{row.runs}</td>
+                <td className={td}>{row.walks}</td>
+                <td className={td}>{row.strikeouts}</td>
+                <td className={td}>{row.seasonAvg ? row.seasonAvg.toFixed(3).replace(/^0/, '') : '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+function PitcherTable({ rows, title }: { rows: PitcherLine[]; title: string }) {
+  if (!rows.length) {
+    return (
+      <section className="rounded-card border border-line bg-surface p-8 text-center shadow-card">
+        <p className="text-[13px] text-fg3">{title} 투수 기록이 아직 없습니다.</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-card border border-line bg-surface px-5 pb-4 pt-4 shadow-card">
+      <h5 className="mb-3 text-[13.5px] font-bold tracking-[-0.025em] text-fg">{title}</h5>
+      <div className="custom-scrollbar -mx-1 overflow-x-auto px-1">
+        <table className="w-full border-collapse" style={{ minWidth: 420 }}>
+          <thead>
+            <tr>
+              <th className={`${th} text-left`}>투수</th>
+              <th className={th}>이닝</th>
+              <th className={th}>투구수</th>
+              <th className={th}>피안타</th>
+              <th className={th}>삼진</th>
+              <th className={th}>볼넷</th>
+              <th className={th}>실점</th>
+              <th className={th}>자책</th>
+              <th className={th}>시즌 ERA</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, i) => (
+              <tr key={`${row.name}-${i}`} className="transition-colors hover:bg-surface2">
+                <td className="border-t border-hair py-2.5">
+                  <div className="flex min-w-0 items-center gap-2 pr-2">
+                    <span className="truncate text-[13px] font-semibold tracking-[-0.02em] text-fg">
+                      {row.name}
+                    </span>
+                    <span className="shrink-0 text-2xs text-fg3">#{row.backNumber}</span>
+                  </div>
+                </td>
+                <td className={`${td} font-semibold text-fg`}>{row.innings}</td>
+                <td className={td}>{row.pitchCount}</td>
+                <td className={td}>{row.hits}</td>
+                <td className={td}>{row.strikeouts}</td>
+                <td className={td}>{row.walks}</td>
+                <td className={td}>{row.runs}</td>
+                <td className={`${td} font-semibold text-fg`}>{row.earnedRuns}</td>
+                <td className={td}>{row.seasonEra || '-'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
+
+export default function GameDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: gameId } = use(params);
+
+  const [game, setGame] = useState<GameDetail | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [tab, setTab] = useState<Tab>('LINEUP');
+  const [updatedAt, setUpdatedAt] = useState('');
+  const [pitches, setPitches] = useState<GamePitches | null>(null);
+  const [pitchError, setPitchError] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/games/${gameId}`);
+      const json = await res.json();
+      if (json.success) {
+        setGame(json.data);
+        setUpdatedAt(new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
+      }
+    } catch (err) {
+      console.error('Failed to fetch game detail:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [gameId]);
 
   useEffect(() => {
-    const fetchGameDetail = async () => {
-      try {
-        const res = await fetch(`/api/games/${gameId}`);
-        const json = await res.json();
-        if (json.success) {
-          setGame(json.data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch game detail:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    load();
+  }, [load]);
 
-    fetchGameDetail();
-  }, [gameId]);
+  // 이닝 수만큼 호출이 나가므로 탭을 열 때만 받는다.
+  useEffect(() => {
+    if (tab !== 'PITCHES' || pitches || !game) return;
+    const q = new URLSearchParams({
+      home: game.homeTeam.code,
+      away: game.awayTeam.code,
+      ...(game.isLive ? { live: '1' } : {}),
+    });
+    fetch(`/api/games/${gameId}/pitches?${q}`)
+      .then((r) => r.json())
+      .then((j) => (j.success ? setPitches(j.data) : setPitchError(j.error ?? '')))
+      .catch(() => setPitchError('투구 데이터를 불러오지 못했습니다.'));
+  }, [tab, pitches, game, gameId]);
+
+  // 진행 중인 경기만 짧은 주기로 다시 받는다. 끝난 경기는 더 이상 바뀌지 않는다.
+  useEffect(() => {
+    if (!game?.isLive) return;
+    const timer = setInterval(load, 10000);
+    return () => clearInterval(timer);
+  }, [game?.isLive, load]);
 
   if (isLoading) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-bg p-6">
         <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-line border-t-accent" />
-        <p className="text-[13px] text-fg2">경기 상세를 불러오는 중입니다</p>
+        <p className="text-[13px] text-fg2">경기 정보를 불러오는 중입니다</p>
       </div>
     );
   }
@@ -65,16 +207,8 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
     );
   }
 
-  const inningCount = Math.max(
-    game.inningScores?.away.length ?? 0,
-    game.inningScores?.home.length ?? 0,
-    9,
-  );
-  const innings = Array.from({ length: inningCount }, (_, index) => index + 1);
-  const isAwayWin = game.awayScore > game.homeScore;
-  const isHomeWin = game.homeScore > game.awayScore;
   const isScheduled = game.status === 'SCHEDULED';
-
+  const innings = Math.max(game.inningScores?.away.length ?? 9, game.inningScores?.home.length ?? 9, 9);
   const statusLabel =
     game.status === 'FINISHED'
       ? '경기 종료'
@@ -84,35 +218,41 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           ? '경기 예정'
           : game.currentInning || '진행중';
 
-  const scoreboardCell = (value: number | string | undefined) => (
-    <span className={Number(value ?? 0) > 0 ? 'font-bold text-fg' : 'text-fg3'}>{value ?? '-'}</span>
-  );
+  const scoreRows = [
+    { key: 'away', team: game.awayTeam, scores: game.inningScores?.away ?? [], rheb: game.awayRheb },
+    { key: 'home', team: game.homeTeam, scores: game.inningScores?.home ?? [], rheb: game.homeRheb },
+  ];
 
   return (
     <div className="min-h-screen bg-bg pb-16">
       <header className="sticky top-0 z-40 border-b border-line bg-surface/90 backdrop-blur-xl backdrop-saturate-150">
         <div className="mx-auto flex h-[60px] max-w-5xl items-center justify-between gap-3 px-4 sm:px-6">
-          <Link
-            href="/"
-            className="flex items-center gap-1.5 text-[13px] font-semibold text-fg2 transition-colors hover:text-fg"
-          >
+          <Link href="/" className="flex items-center gap-1.5 text-[13px] font-semibold text-fg2 transition-colors hover:text-fg">
             <ArrowRightIcon className="rotate-180 text-fg3" />
             대시보드
           </Link>
           <span className="tnum hidden truncate text-xs text-fg3 sm:block">
             {game.date} · {game.stadium}
+            {game.weather ? ` · ${game.weather}` : ''}
           </span>
           <div className="flex items-center gap-2.5">
-            <span className="rounded-chip bg-surface2 px-2 py-1 text-2xs font-semibold text-fg2">
-              {statusLabel}
-            </span>
+            {game.isLive ? (
+              <span className="flex items-center gap-1.5 rounded-chip bg-live-soft px-2 py-1 text-2xs font-bold text-live">
+                <span className="h-[5px] w-[5px] animate-pulse rounded-full bg-live" />
+                {statusLabel}
+              </span>
+            ) : (
+              <span className="rounded-chip bg-surface2 px-2 py-1 text-2xs font-semibold text-fg2">
+                {statusLabel}
+              </span>
+            )}
             <ThemeToggle />
           </div>
         </div>
       </header>
 
       <main className="mx-auto flex max-w-5xl flex-col gap-5 px-4 pt-6 sm:px-6">
-        {/* 스코어보드 헤더 */}
+        {/* 스코어 헤더 */}
         <section className="rounded-card border border-line bg-surface p-6 shadow-card sm:p-8">
           <div className="flex items-center justify-between gap-4">
             <div className="flex flex-1 flex-col items-center gap-3 text-center sm:flex-row sm:text-left">
@@ -127,24 +267,18 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
 
             <div className="shrink-0 px-2 text-center sm:px-4">
               {isScheduled ? (
-                <span className="tnum text-3xl font-bold tracking-[-0.04em] text-fg sm:text-4xl">
-                  {game.time}
-                </span>
+                <span className="tnum text-3xl font-bold tracking-[-0.04em] text-fg sm:text-4xl">{game.time}</span>
               ) : (
-                <>
-                  <div className="tnum flex items-center justify-center gap-2.5 text-3xl font-bold tracking-[-0.04em] sm:text-5xl">
-                    <span className={isAwayWin ? 'text-fg' : 'text-fg3'}>{game.awayScore}</span>
-                    <span className="text-2xl font-normal text-fg3">:</span>
-                    <span className={isHomeWin ? 'text-fg' : 'text-fg3'}>{game.homeScore}</span>
-                  </div>
-                  <span className="mt-2 inline-block rounded-md bg-surface2 px-2.5 py-1 text-2xs font-semibold text-fg2">
-                    {isHomeWin
-                      ? `${game.homeTeam.shortName} 승리`
-                      : isAwayWin
-                        ? `${game.awayTeam.shortName} 승리`
-                        : '무승부'}
-                  </span>
-                </>
+                <div className="tnum flex items-center justify-center gap-2.5 text-3xl font-bold tracking-[-0.04em] sm:text-5xl">
+                  <span className={game.awayScore > game.homeScore ? 'text-fg' : 'text-fg3'}>{game.awayScore}</span>
+                  <span className="text-2xl font-normal text-fg3">:</span>
+                  <span className={game.homeScore > game.awayScore ? 'text-fg' : 'text-fg3'}>{game.homeScore}</span>
+                </div>
+              )}
+              {game.winPitcher && (
+                <p className="mt-2 text-2xs text-fg3">
+                  승 {game.winPitcher} · 패 {game.losePitcher}
+                </p>
               )}
             </div>
 
@@ -160,39 +294,42 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         </section>
 
-        {/* 선수 프로필 사진은 제공하지 않는다. 구단 색과 텍스트로만 구분한다. */}
-        {game.status === 'FINISHED' && game.bestPlayer && game.worstPlayer && (
-          <section aria-labelledby="game-player-highlights" className="flex flex-col gap-3">
-            <div className="flex items-end justify-between gap-3 px-0.5">
-              <h2 id="game-player-highlights" className="text-[15px] font-bold tracking-[-0.025em] text-fg">
-                오늘의 선수
-              </h2>
-              <p className="text-xs text-fg3">당일 기록과 승부 기여도 기준</p>
+        {/* 실시간 상황 */}
+        {game.live && (
+          <section className="flex flex-col gap-4 rounded-card border border-accent bg-surface p-5 shadow-card">
+            <div className="flex items-center justify-between gap-3">
+              <h4 className="flex items-center gap-2 text-[15px] font-bold tracking-[-0.025em] text-fg">
+                <span className="h-[6px] w-[6px] animate-pulse rounded-full bg-live" />
+                {game.live.inning}
+              </h4>
+              <span className="tnum text-2xs text-fg3">{updatedAt} 갱신 · 10초마다</span>
             </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <GamePlayerHighlight player={game.bestPlayer} variant="BEST" />
-              <GamePlayerHighlight player={game.worstPlayer} variant="WORST" />
+
+            <div className="flex flex-wrap items-center gap-6">
+              <LiveCount live={game.live} />
+              <div className="min-w-[200px] flex-1">
+                <LiveMatchup live={game.live} />
+              </div>
             </div>
+
+            <LiveWinRate live={game.live} awayName={game.awayTeam.shortName} homeName={game.homeTeam.shortName} />
           </section>
         )}
 
         {/* 이닝별 점수판 */}
-        {game.inningScores && (
+        {!isScheduled && (
           <section className="rounded-card border border-line bg-surface px-5 pb-3.5 pt-4 shadow-card">
             <div className="flex items-end justify-between gap-3 pb-3.5">
               <h4 className="text-[15px] font-bold tracking-[-0.025em] text-fg">이닝별 점수</h4>
               <span className="text-xs text-fg3">R 득점 · H 안타 · E 실책 · B 사사구</span>
             </div>
-
-            <div className="-mx-1 overflow-x-auto px-1">
-              <table className="w-full min-w-[560px] border-collapse text-center">
+            <div className="custom-scrollbar -mx-1 overflow-x-auto px-1">
+              <table className="w-full border-collapse text-center" style={{ minWidth: 560 }}>
                 <thead>
                   <tr className="text-2xs font-semibold text-fg3">
                     <th className="pb-2.5 pr-3 text-left font-semibold">팀</th>
-                    {innings.map((i) => (
-                      <th key={i} className="w-7 pb-2.5 font-semibold">
-                        {i}
-                      </th>
+                    {Array.from({ length: innings }, (_, i) => (
+                      <th key={i} className="w-7 pb-2.5 font-semibold">{i + 1}</th>
                     ))}
                     <th className="w-9 pb-2.5 font-semibold text-fg2">R</th>
                     <th className="w-9 pb-2.5 font-semibold">H</th>
@@ -201,32 +338,30 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
                   </tr>
                 </thead>
                 <tbody className="tnum text-[13px]">
-                  {(
-                    [
-                      ['away', game.awayTeam, game.inningScores.away, game.awayStats, game.awayScore],
-                      ['home', game.homeTeam, game.inningScores.home, game.homeStats, game.homeScore],
-                    ] as const
-                  ).map(([key, team, scores, teamStats, total]) => (
-                    <tr key={key} className="transition-colors hover:bg-surface2">
+                  {scoreRows.map((row) => (
+                    <tr key={row.key} className="transition-colors hover:bg-surface2">
                       <td className="border-t border-hair py-3 pr-3 text-left">
                         <div className="flex items-center gap-2">
-                          <TeamBadge team={team.code} fallbackLabel={team.shortName} size={24} radius={7} />
+                          <TeamBadge team={row.team.code} fallbackLabel={row.team.shortName} size={20} radius={6} />
                           <span className="whitespace-nowrap text-[13px] font-semibold tracking-[-0.02em] text-fg">
-                            {team.name}
+                            {row.team.name}
                           </span>
                         </div>
                       </td>
-                      {innings.map((inning, idx) => (
-                        <td key={inning} className="border-t border-hair py-3">
-                          {scoreboardCell(scores[idx])}
-                        </td>
-                      ))}
-                      <td className="border-t border-hair py-3 text-sm font-bold text-fg">
-                        {teamStats?.runs ?? total}
-                      </td>
-                      <td className="border-t border-hair py-3 text-fg2">{teamStats?.hits ?? '-'}</td>
-                      <td className="border-t border-hair py-3 text-fg3">{teamStats?.errors ?? '-'}</td>
-                      <td className="border-t border-hair py-3 text-fg3">{teamStats?.walks ?? '-'}</td>
+                      {Array.from({ length: innings }, (_, i) => {
+                        const v = row.scores[i];
+                        return (
+                          <td key={i} className="border-t border-hair py-3">
+                            <span className={Number(v) > 0 ? 'font-bold text-fg' : 'text-fg3'}>
+                              {v === undefined ? '-' : v}
+                            </span>
+                          </td>
+                        );
+                      })}
+                      <td className="border-t border-hair py-3 text-sm font-bold text-fg">{row.rheb.runs}</td>
+                      <td className="border-t border-hair py-3 text-fg2">{row.rheb.hits}</td>
+                      <td className="border-t border-hair py-3 text-fg3">{row.rheb.errors}</td>
+                      <td className="border-t border-hair py-3 text-fg3">{row.rheb.walks}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -235,17 +370,15 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
           </section>
         )}
 
-        {/* 상세 탭 */}
+        {/* 타순 / 투수 */}
         <div className="flex flex-col gap-3">
           <div className="flex gap-0.5 rounded-control bg-track p-[3px]">
-            {DETAIL_TABS.map((t) => (
+            {TABS.map((t) => (
               <button
                 key={t.value}
-                onClick={() => setActiveTab(t.value)}
+                onClick={() => setTab(t.value)}
                 className={`flex-1 rounded-chip py-2 text-[13px] transition-colors ${
-                  activeTab === t.value
-                    ? 'bg-thumb font-semibold text-fg shadow-thumb'
-                    : 'font-medium text-fg2 hover:text-fg'
+                  tab === t.value ? 'bg-thumb font-semibold text-fg shadow-thumb' : 'font-medium text-fg2 hover:text-fg'
                 }`}
               >
                 {t.label}
@@ -253,111 +386,30 @@ export default function GameDetailPage({ params }: { params: Promise<{ id: strin
             ))}
           </div>
 
-          {activeTab === 'AI_REPORT' &&
-            (game.aiReview ? (
-              <section className="flex flex-col gap-6 rounded-card border border-line bg-surface p-6 shadow-card">
-                <div>
-                  <span className="mb-2 flex w-fit items-center gap-1.5 rounded-md bg-accent-soft px-2 py-1 text-2xs font-semibold text-accent">
-                    <SparkIcon size={12} />
-                    AI 리포트
-                  </span>
-                  <h4 className="text-[17px] font-bold leading-snug tracking-[-0.03em] text-fg">
-                    {game.aiReview.headline}
-                  </h4>
-                  <p className="mt-2 text-[13.5px] leading-relaxed tracking-[-0.01em] text-fg2">
-                    {game.aiReview.summary}
-                  </p>
-                </div>
-
-                <div>
-                  <h5 className="mb-2.5 text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
-                    승패를 가른 요인
-                  </h5>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    {game.aiReview.keyFactors.map((factor, idx) => (
-                      <div
-                        key={idx}
-                        className="rounded-control bg-surface2 px-3.5 py-3 text-[13px] leading-relaxed text-fg"
-                      >
-                        {factor}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <h5 className="mb-2.5 text-2xs font-semibold uppercase tracking-[0.04em] text-fg3">
-                    선발 투수 피칭 분석
-                  </h5>
-                  <p className="rounded-control border border-line px-3.5 py-3 text-[13px] leading-relaxed text-fg2">
-                    {game.aiReview.pitcherAnalysis}
-                  </p>
-                </div>
-              </section>
-            ) : (
-              <section className="rounded-card border border-line bg-surface p-12 text-center text-[13px] text-fg2 shadow-card">
-                아직 생성된 AI 리포트가 없습니다.
-              </section>
-            ))}
-
-          {activeTab === 'LINEUP' && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {(
-                [
-                  [game.awayTeam, game.awayLineup, game.awayPitcher],
-                  [game.homeTeam, game.homeLineup, game.homePitcher],
-                ] as const
-              ).map(([team, lineup, pitcher]) => (
-                <section
-                  key={team.code}
-                  className="rounded-card border border-line bg-surface px-5 pb-4 pt-4 shadow-card"
-                >
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      <TeamBadge team={team.code} fallbackLabel={team.shortName} size={26} radius={8} />
-                      <h5 className="truncate text-[13.5px] font-bold tracking-[-0.025em] text-fg">
-                        {team.name}
-                      </h5>
-                    </div>
-                    <span className="shrink-0 text-xs text-fg3">선발 {pitcher}</span>
-                  </div>
-
-                  {lineup?.length ? (
-                    <ul className="flex flex-col">
-                      {lineup.map((item) => (
-                        <li
-                          key={item.order}
-                          className="tnum flex items-center gap-3 border-t border-hair py-2.5 text-[13px]"
-                        >
-                          <span className="w-4 shrink-0 text-fg3">{item.order}</span>
-                          <span className="w-9 shrink-0 text-xs text-fg3">{item.position}</span>
-                          <span className="min-w-0 flex-1 truncate font-semibold tracking-[-0.02em] text-fg">
-                            {item.name}
-                          </span>
-                          <span className="shrink-0 text-fg2">
-                            {item.avg.toFixed(3).replace(/^0/, '')}
-                          </span>
-                          <span className="w-[74px] shrink-0 text-right text-xs text-fg2">
-                            {item.hits}안타 {item.rbi}타점
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <p className="py-8 text-center text-[13px] text-fg3">라인업이 아직 공개되지 않았습니다.</p>
-                  )}
-                </section>
-              ))}
-            </div>
-          )}
-
-          {activeTab === 'HEAD_TO_HEAD' && (
-            <section className="rounded-card border border-line bg-surface p-8 text-center shadow-card">
-              <h4 className="text-[15px] font-bold tracking-[-0.025em] text-fg">시즌 상대 전적</h4>
-              <p className="mx-auto mt-3 max-w-md rounded-control bg-surface2 px-6 py-4 text-[17px] font-bold tracking-[-0.03em] text-fg">
-                {game.headToHeadRecord || '기록 없음'}
-              </p>
+          {tab === 'PITCHES' ? (
+            <section className="rounded-card border border-line bg-surface px-5 pb-5 pt-4 shadow-card">
+              {pitches ? (
+                <StrikeZone data={pitches} awayTeam={game.awayTeam} homeTeam={game.homeTeam} />
+              ) : (
+                <p className="py-8 text-center text-[13px] text-fg3">
+                  {pitchError || '투구 데이터를 불러오는 중입니다.'}
+                </p>
+              )}
             </section>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              {tab === 'LINEUP' ? (
+                <>
+                  <LineupTable rows={game.awayBatters} title={game.awayTeam.name} />
+                  <LineupTable rows={game.homeBatters} title={game.homeTeam.name} />
+                </>
+              ) : (
+                <>
+                  <PitcherTable rows={game.awayPitchers} title={game.awayTeam.name} />
+                  <PitcherTable rows={game.homePitchers} title={game.homeTeam.name} />
+                </>
+              )}
+            </div>
           )}
         </div>
       </main>

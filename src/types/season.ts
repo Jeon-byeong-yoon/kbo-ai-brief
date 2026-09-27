@@ -39,7 +39,8 @@ export interface SeasonHitterRecord {
   qualified: boolean;
   name: string;
   team: string;
-  imageUrl: string | null;
+  /** 선수 상세로 이동할 때 쓴다 */
+  playerId: string;
   games: number;
   avg: number;
   hits: number;
@@ -58,7 +59,8 @@ export interface SeasonPitcherRecord {
   qualified: boolean;
   name: string;
   team: string;
-  imageUrl: string | null;
+  /** 선수 상세로 이동할 때 쓴다 */
+  playerId: string;
   games: number;
   era: number;
   wins: number;

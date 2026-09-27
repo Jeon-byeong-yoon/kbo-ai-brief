@@ -1,3 +1,5 @@
+import { MagicNumber } from '@/types/magic-number';
+
 // KBO AI Brief Core Types
 export type GameStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'FINISHED' | 'POSTPONED' | 'CANCELLED';
 
@@ -84,13 +86,18 @@ export interface KBOGame {
 }
 
 export interface PlayerSearchResult {
+  /** 타자/투수 구분이 섞인 목록이라 접두어를 붙인 값. 목록 key 로만 쓴다 */
   id: string;
+  /** 네이버 선수 번호. 선수 상세로 이동할 때 쓴다 */
+  playerId: string;
   name: string;
   team: string;
   teamCode: string;
   position: string;
   playerType: 'BATTER' | 'PITCHER';
   seasonYear: number;
+  /** 커리어 검색(scope=career)에서만 온다. "2007~2026" 같은 활동 기간 */
+  span?: string;
   stats: Array<{
     label: string;
     value: string;
@@ -108,11 +115,14 @@ export interface KBOTeamStanding {
   winRate: number;
   gameBehind: number; // 승차
   recent10: string; // e.g. '7승3패'
+  /** 매직넘버 / 트래직넘버. 시즌 중에만 의미가 있다 */
+  magic?: MagicNumber;
   streak: string; // e.g. '3연승'
 }
 
 export interface PitcherLeader {
   rank: number;
+  playerId: string;
   name: string;
   team: string;
   era: number;
@@ -126,6 +136,7 @@ export interface PitcherLeader {
 
 export interface BatterLeader {
   rank: number;
+  playerId: string;
   name: string;
   team: string;
   avg: number;

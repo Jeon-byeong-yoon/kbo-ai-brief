@@ -1,10 +1,43 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { KBOTeamStanding } from '../types/kbo';
 import { TeamBadge } from './ui/TeamBadge';
 import { StarIcon } from './ui/Icons';
 import { RecentForm } from './ui/RecentForm';
+
+/**
+ * 매직넘버 한 칸.
+ *  - 0 이면 확정
+ *  - null 이면 산술적으로 불가능 (1위 경쟁에서 밀렸거나 포스트시즌 탈락)
+ *  - 그 밖에는 "내 승 + 경쟁팀 패" 가 몇 번 더 필요한지
+ */
+const MagicCell: React.FC<{ value: number | null | undefined; eliminatedLabel: string; title: string }> = ({
+  value,
+  eliminatedLabel,
+  title,
+}) => {
+  const base = 'tnum border-t border-hair py-2.5 text-center text-[12.5px]';
+  if (value === undefined) return <td className={`${base} text-fg3`}>·</td>;
+  if (value === 0)
+    return (
+      <td className={`${base} hidden sm:table-cell`} title={`${title} 확정`}>
+        <span className="rounded-md bg-win-soft px-1.5 py-0.5 text-2xs font-semibold text-win">확정</span>
+      </td>
+    );
+  if (value === null)
+    return (
+      <td className={`${base} hidden text-fg3 sm:table-cell`} title={`${title} 불가`}>
+        {eliminatedLabel}
+      </td>
+    );
+  return (
+    <td className={`${base} hidden font-semibold text-fg2 sm:table-cell`} title={`${title}까지 ${value}`}>
+      {value}
+    </td>
+  );
+};
 
 interface StandingsTableProps {
   standings: KBOTeamStanding[];
@@ -46,6 +79,8 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({
             <col className="w-[42px]" />
             <col className="hidden w-[88px] sm:table-column" />
             <col className="w-[50px]" />
+            <col className="hidden w-[44px] sm:table-column" />
+            <col className="hidden w-[44px] sm:table-column" />
           </colgroup>
           <thead>
             <tr className="text-2xs font-semibold tracking-[-0.01em] text-fg3">
@@ -59,6 +94,12 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({
               <th className="pb-2.5 text-center font-semibold">게임차</th>
               <th className="hidden pb-2.5 text-center font-semibold sm:table-cell">최근</th>
               <th className="pb-2.5 text-right font-semibold">연속</th>
+              <th className="hidden pb-2.5 text-center font-semibold sm:table-cell" title="정규시즌 1위 매직넘버">
+                1위
+              </th>
+              <th className="hidden pb-2.5 text-center font-semibold sm:table-cell" title="포스트시즌 진출 매직넘버">
+                PS
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -105,13 +146,15 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({
                         size={26}
                         radius={8}
                       />
-                      <span
-                        className={`truncate text-[12.5px] tracking-[-0.025em] text-fg ${
+                      <Link
+                        href={`/teams/${row.team.code}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className={`truncate text-[12.5px] tracking-[-0.025em] text-fg hover:text-accent hover:underline ${
                           isFavorite ? 'font-bold' : 'font-medium'
                         }`}
                       >
                         {row.team.name}
-                      </span>
+                      </Link>
                       {isFavorite && <StarIcon size={10} className="shrink-0 text-accent" />}
                     </div>
                   </td>
@@ -146,12 +189,20 @@ export const StandingsTable: React.FC<StandingsTableProps> = ({
                       {row.streak}
                     </span>
                   </td>
+                  <MagicCell value={row.magic?.pennant} eliminatedLabel="—" title="정규 1위" />
+                  <MagicCell value={row.magic?.playoff} eliminatedLabel="탈락" title="포스트시즌 진출" />
                 </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
+      <p className="hidden pt-2 text-2xs leading-relaxed text-fg3 sm:block">
+        1위 · PS 는 매직넘버입니다. 내 승리와 경쟁팀 패배를 합쳐 그만큼 더 쌓이면
+        정규시즌 1위 또는 포스트시즌 진출이 확정됩니다. 남은 경기는 아직 편성되지 않은
+        순연 경기까지 포함해 144경기 기준으로 셉니다.
+      </p>
     </section>
   );
 };

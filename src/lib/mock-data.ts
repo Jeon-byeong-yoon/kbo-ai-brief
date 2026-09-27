@@ -156,19 +156,19 @@ export const MOCK_STANDINGS_TODAY: KBOTeamStanding[] = [
 ];
 
 export const MOCK_PITCHER_LEADERS: PitcherLeader[] = [
-  { rank: 1, name: '양현종', team: 'KIA', era: 2.34, wins: 10, losses: 3, saves: 0, strikeouts: 112, whip: 1.05, war: 4.85 },
-  { rank: 2, name: '류현진', team: '한화', era: 2.58, wins: 9, losses: 4, saves: 0, strikeouts: 105, whip: 1.10, war: 4.32 },
-  { rank: 3, name: '원태인', team: '삼성', era: 2.85, wins: 10, losses: 5, saves: 0, strikeouts: 98, whip: 1.15, war: 3.95 },
-  { rank: 4, name: '김광현', team: 'SSG', era: 2.92, wins: 8, losses: 5, saves: 0, strikeouts: 92, whip: 1.18, war: 3.65 },
-  { rank: 5, name: '곽빈', team: '두산', era: 3.12, wins: 8, losses: 6, saves: 0, strikeouts: 101, whip: 1.22, war: 3.40 },
+  { playerId: '', rank: 1, name: '양현종', team: 'KIA', era: 2.34, wins: 10, losses: 3, saves: 0, strikeouts: 112, whip: 1.05, war: 4.85 },
+  { playerId: '', rank: 2, name: '류현진', team: '한화', era: 2.58, wins: 9, losses: 4, saves: 0, strikeouts: 105, whip: 1.10, war: 4.32 },
+  { playerId: '', rank: 3, name: '원태인', team: '삼성', era: 2.85, wins: 10, losses: 5, saves: 0, strikeouts: 98, whip: 1.15, war: 3.95 },
+  { playerId: '', rank: 4, name: '김광현', team: 'SSG', era: 2.92, wins: 8, losses: 5, saves: 0, strikeouts: 92, whip: 1.18, war: 3.65 },
+  { playerId: '', rank: 5, name: '곽빈', team: '두산', era: 3.12, wins: 8, losses: 6, saves: 0, strikeouts: 101, whip: 1.22, war: 3.40 },
 ];
 
 export const MOCK_BATTER_LEADERS: BatterLeader[] = [
-  { rank: 1, name: '김도영', team: 'KIA', avg: 0.348, homeRuns: 28, rbi: 78, ops: 1.042, war: 5.62 },
-  { rank: 2, name: '구자욱', team: '삼성', avg: 0.332, homeRuns: 22, rbi: 71, ops: 0.965, war: 4.88 },
-  { rank: 3, name: '노시환', team: '한화', avg: 0.315, homeRuns: 25, rbi: 75, ops: 0.942, war: 4.52 },
-  { rank: 4, name: '최정', team: 'SSG', avg: 0.298, homeRuns: 24, rbi: 69, ops: 0.925, war: 4.15 },
-  { rank: 5, name: '박해민', team: 'LG', avg: 0.312, homeRuns: 8, rbi: 45, ops: 0.845, war: 3.82 },
+  { playerId: '', rank: 1, name: '김도영', team: 'KIA', avg: 0.348, homeRuns: 28, rbi: 78, ops: 1.042, war: 5.62 },
+  { playerId: '', rank: 2, name: '구자욱', team: '삼성', avg: 0.332, homeRuns: 22, rbi: 71, ops: 0.965, war: 4.88 },
+  { playerId: '', rank: 3, name: '노시환', team: '한화', avg: 0.315, homeRuns: 25, rbi: 75, ops: 0.942, war: 4.52 },
+  { playerId: '', rank: 4, name: '최정', team: 'SSG', avg: 0.298, homeRuns: 24, rbi: 69, ops: 0.925, war: 4.15 },
+  { playerId: '', rank: 5, name: '박해민', team: 'LG', avg: 0.312, homeRuns: 8, rbi: 45, ops: 0.845, war: 3.82 },
 ];
 
 export const MOCK_HISTORICAL_2025: HistoricalSeason = {

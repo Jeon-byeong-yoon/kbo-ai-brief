@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
 import { SeasonHitterRecord, SeasonPitcherRecord, SeasonTeamRecord } from '@/types/season';
 import { TeamBadge } from '@/components/ui/TeamBadge';
 import { RecentForm } from '@/components/ui/RecentForm';
@@ -17,13 +18,26 @@ const Rank: React.FC<{ value: number; highlight?: boolean }> = ({ value, highlig
   <span className={`tnum text-[13px] font-bold ${highlight ? 'text-fg' : 'text-fg3'}`}>{value}</span>
 );
 
-const PlayerCell: React.FC<{ name: string; team: string }> = ({ name, team }) => (
-  <div className="flex min-w-0 items-center gap-2 pr-2">
-    <TeamBadge team={team} fallbackLabel={team} size={24} radius={7} />
-    <span className="truncate text-[13px] font-semibold tracking-[-0.02em] text-fg">{name}</span>
-    <span className="shrink-0 text-2xs text-fg3">{team}</span>
-  </div>
-);
+const PlayerCell: React.FC<{ name: string; team: string; playerId?: string }> = ({
+  name,
+  team,
+  playerId,
+}) => {
+  const cls = 'truncate text-[13px] font-semibold tracking-[-0.02em] text-fg';
+  return (
+    <div className="flex min-w-0 items-center gap-2 pr-2">
+      <TeamBadge team={team} fallbackLabel={team} size={24} radius={7} />
+      {playerId ? (
+        <Link href={`/players/${playerId}`} className={`${cls} hover:text-accent hover:underline`}>
+          {name}
+        </Link>
+      ) : (
+        <span className={cls}>{name}</span>
+      )}
+      <span className="shrink-0 text-2xs text-fg3">{team}</span>
+    </div>
+  );
+};
 
 const Shell: React.FC<{ minWidth: number; children: React.ReactNode }> = ({ minWidth, children }) => (
   <div className="custom-scrollbar -mx-1 overflow-x-auto px-1">
@@ -187,7 +201,7 @@ export const SeasonHitters: React.FC<{ rows: SeasonHitterRecord[] }> = ({ rows }
               <Rank value={row.rank} highlight={row.rank <= 3} />
             </td>
             <td className="border-t border-hair py-2.5">
-              <PlayerCell name={row.name} team={row.team} />
+              <PlayerCell name={row.name} team={row.team} playerId={row.playerId} />
             </td>
             <td className={td}>{row.games}</td>
             <td className={`${td} font-bold text-fg`}>{rate(row.avg)}</td>
@@ -237,7 +251,7 @@ export const SeasonPitchers: React.FC<{ rows: SeasonPitcherRecord[] }> = ({ rows
               <Rank value={row.rank} highlight={row.rank <= 3} />
             </td>
             <td className="border-t border-hair py-2.5">
-              <PlayerCell name={row.name} team={row.team} />
+              <PlayerCell name={row.name} team={row.team} playerId={row.playerId} />
             </td>
             <td className={td}>{row.games}</td>
             <td className={`${td} font-bold text-fg`}>{row.era.toFixed(2)}</td>
