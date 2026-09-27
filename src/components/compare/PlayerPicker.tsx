@@ -14,18 +14,28 @@ export const PlayerPicker: React.FC<{
   const [query, setQuery] = React.useState('');
   const [results, setResults] = React.useState<PlayerSearchResult[]>([]);
   const [open, setOpen] = React.useState(false);
+  const [searching, setSearching] = React.useState(false);
 
   React.useEffect(() => {
     const q = query.trim();
     if (q.length < 1) {
       setResults([]);
+      setSearching(false);
       return;
     }
     const controller = new AbortController();
+    setSearching(true);
     const timer = setTimeout(() => {
-      fetch(`/api/players/search?q=${encodeURIComponent(q)}`, { signal: controller.signal })
+      // scope=career 로 은퇴 선수까지 찾는다. 이번 시즌만 보면 김광현처럼
+      // 작년까지 뛴 선수가 아예 안 나온다.
+      fetch(`/api/players/search?scope=career&q=${encodeURIComponent(q)}`, {
+        signal: controller.signal,
+      })
         .then((r) => r.json())
-        .then((j) => setResults(j.success ? j.data : []))
+        .then((j) => {
+          setResults(j.success ? j.data : []);
+          setSearching(false);
+        })
         .catch(() => undefined);
     }, 200);
     return () => {
@@ -33,6 +43,13 @@ export const PlayerPicker: React.FC<{
       controller.abort();
     };
   }, [query]);
+
+  const choose = (r: PlayerSearchResult) => {
+    onPick(r.playerId);
+    setQuery('');
+    setResults([]);
+    setOpen(false);
+  };
 
   if (picked) {
     return (
@@ -67,10 +84,26 @@ export const PlayerPicker: React.FC<{
           onChange={(e) => setQuery(e.target.value)}
           onFocus={() => setOpen(true)}
           onBlur={() => setTimeout(() => setOpen(false), 150)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && results.length > 0) {
+              e.preventDefault();
+              choose(results[0]);
+            }
+          }}
           placeholder={`${label} 선수 이름`}
           className="min-w-0 flex-1 bg-transparent text-[14px] text-fg outline-none placeholder:text-fg3"
         />
       </div>
+
+      {query.trim().length > 0 && (
+        <p className="px-1 pt-1 text-2xs text-fg3">
+          {searching
+            ? '찾는 중입니다.'
+            : results.length === 0
+              ? '검색 결과가 없습니다. 2007년 이후 뛴 선수만 찾을 수 있습니다.'
+              : '목록에서 선수를 고르세요. 엔터를 누르면 맨 위가 선택됩니다.'}
+        </p>
+      )}
 
       {open && results.length > 0 && (
         <ul className="absolute left-0 right-0 top-full z-20 mt-1 max-h-64 overflow-y-auto rounded-control border border-line bg-surface py-1 shadow-pop">
@@ -78,15 +111,12 @@ export const PlayerPicker: React.FC<{
             <li key={r.id}>
               <button
                 type="button"
-                onMouseDown={() => {
-                  onPick(r.playerId);
-                  setQuery('');
-                  setResults([]);
-                }}
+                onMouseDown={() => choose(r)}
                 className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-surface2"
               >
                 <TeamBadge team={r.teamCode} fallbackLabel={r.team} size={22} radius={7} />
-                <span className="truncate text-[13px] font-semibold text-fg">{r.name}</span>
+                <span className="shrink-0 text-[13px] font-semibold text-fg">{r.name}</span>
+                <span className="tnum truncate text-2xs text-fg3">{r.span ?? ''}</span>
                 <span className="ml-auto shrink-0 text-2xs text-fg3">
                   {r.playerType === 'PITCHER' ? '투수' : '타자'}
                 </span>

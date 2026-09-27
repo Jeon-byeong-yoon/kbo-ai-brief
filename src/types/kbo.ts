@@ -96,6 +96,8 @@ export interface PlayerSearchResult {
   position: string;
   playerType: 'BATTER' | 'PITCHER';
   seasonYear: number;
+  /** 커리어 검색(scope=career)에서만 온다. "2007~2026" 같은 활동 기간 */
+  span?: string;
   stats: Array<{
     label: string;
     value: string;

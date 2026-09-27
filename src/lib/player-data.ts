@@ -94,8 +94,12 @@ const parsePosition = (profile?: string, fallback = '선수') => {
 const fullTeamName = (player: NaverSeasonPlayerStat) =>
   TEAM_NAMES[player.teamId] ?? player.teamName ?? player.teamShortName;
 
+/**
+ * pageSize 를 주지 않으면 네이버가 상위 50명만 준다. 그러면 검색 색인에 리더보드
+ * 상위권만 들어가서 양현종처럼 성적이 중간인 선수가 아예 검색되지 않는다.
+ */
 async function fetchPlayerType(playerType: 'PITCHER' | 'HITTER') {
-  const response = await fetch(`${NAVER_PLAYER_STATS_URL}?playerType=${playerType}`, {
+  const response = await fetch(`${NAVER_PLAYER_STATS_URL}?playerType=${playerType}&pageSize=500`, {
     headers: {
       'User-Agent':
         'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
@@ -122,7 +126,12 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
     fetchPlayerType('HITTER'),
   ]);
 
-  const pitchers: PitcherLeader[] = rawPitchers.map((player, index) => ({
+  // 리더보드에는 순위가 매겨진 선수만 넣는다. 규정 이닝·타석을 못 채운 선수는
+  // ranking 이 없는데, 그대로 섞으면 8경기 1안타가 1위로 올라온다.
+  const rankedPitchers = rawPitchers.filter((p) => (p.ranking ?? 0) > 0);
+  const rankedBatters = rawBatters.filter((p) => (p.ranking ?? 0) > 0);
+
+  const pitchers: PitcherLeader[] = rankedPitchers.map((player, index) => ({
     rank: player.ranking ?? index + 1,
     playerId: player.playerId,
     name: player.playerName,
@@ -136,7 +145,7 @@ export async function fetchLivePlayerData(): Promise<LivePlayerData> {
     war: player.pitcherWar ?? 0,
   }));
 
-  const batters: BatterLeader[] = rawBatters.map((player, index) => ({
+  const batters: BatterLeader[] = rankedBatters.map((player, index) => ({
     rank: player.ranking ?? index + 1,
     playerId: player.playerId,
     name: player.playerName,
