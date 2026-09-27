@@ -1,10 +1,5 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import { HeadToHead, HeadToHeadCell, HeadToHeadRow } from '@/types/head-to-head';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 export interface ScheduleGame {
   gameId: string;
@@ -21,7 +16,7 @@ const lastDay = (year: number, month: number) => new Date(year, month, 0).getDat
 const pad = (n: number) => String(n).padStart(2, '0');
 
 async function fetchJson(url: string, revalidate: number) {
-  const res = await fetch(url, { headers: HEADERS, next: { revalidate } });
+  const res = await fetch(url, { headers: NAVER_HEADERS, next: { revalidate } });
   if (!res.ok) throw new Error(`naver ${res.status}`);
   return res.json();
 }
@@ -105,7 +100,7 @@ function findRegularSeason(games: ScheduleGame[], official: Map<string, Record3>
  */
 export async function fetchRegularSeasonGames(year: number): Promise<ScheduleGame[] | null> {
   const isCurrent = year >= new Date().getFullYear();
-  const revalidate = isCurrent ? 60 * 60 : 60 * 60 * 24 * 7;
+  const revalidate = isCurrent ? REVALIDATE.daily : REVALIDATE.archived;
 
   const standings = await fetchJson(
     `https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/teams`,
@@ -128,7 +123,7 @@ export async function fetchRegularSeasonGames(year: number): Promise<ScheduleGam
 
 export async function fetchHeadToHead(year: number): Promise<HeadToHead | null> {
   const isCurrent = year >= new Date().getFullYear();
-  const revalidate = isCurrent ? 60 * 60 : 60 * 60 * 24 * 7;
+  const revalidate = isCurrent ? REVALIDATE.daily : REVALIDATE.archived;
 
   const standings = await fetchJson(
     `https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/teams`,

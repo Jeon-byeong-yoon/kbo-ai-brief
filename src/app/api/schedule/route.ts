@@ -1,3 +1,4 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
@@ -8,12 +9,6 @@ import { NextRequest, NextResponse } from 'next/server';
  * 부른다.
  */
 const NAVER_SCHEDULE_URL = 'https://api-gw.sports.naver.com/schedule/games';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 export interface ScheduleDaySummary {
   date: string; // 'YYYY-MM-DD'
@@ -45,7 +40,7 @@ export async function GET(request: NextRequest) {
 
   try {
     const url = `${NAVER_SCHEDULE_URL}?fromDate=${from}&toDate=${to}&upperCategoryId=kbaseball&size=300`;
-    const response = await fetch(url, { headers: HEADERS, next: { revalidate: 300 } });
+    const response = await fetch(url, { headers: NAVER_HEADERS, next: { revalidate: REVALIDATE.preview } });
     const json = await response.json();
 
     const games: Array<Record<string, unknown>> = (json?.result?.games ?? []).filter(

@@ -1,10 +1,5 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import { GamePitches, Pitch, PitchResult, PitcherPitches } from '@/types/pitch';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 type Raw = Record<string, any>;
 
@@ -71,8 +66,8 @@ function classify(text: string): PitchResult {
 async function fetchRelay(gameId: string, inning: number | null, live: boolean) {
   const q = inning === null ? '' : `?inning=${inning}`;
   const res = await fetch(`https://api-gw.sports.naver.com/schedule/games/${gameId}/relay${q}`, {
-    headers: HEADERS,
-    ...(live ? { cache: 'no-store' as const } : { next: { revalidate: 60 * 60 * 24 } }),
+    headers: NAVER_HEADERS,
+    ...(live ? { cache: 'no-store' as const } : { next: { revalidate: REVALIDATE.archived } }),
   });
   if (!res.ok) throw new Error(`naver ${res.status}`);
   const json = await res.json();

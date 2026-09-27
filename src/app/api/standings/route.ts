@@ -1,3 +1,4 @@
+import { NAVER_HEADERS } from '@/lib/naver';
 import { NextResponse } from 'next/server';
 import { KBOTeamStanding, KBOTeam } from '@/types/kbo';
 import { calculateMagicNumbers } from '@/lib/magic-number';
@@ -34,9 +35,7 @@ export async function GET() {
   try {
     // 2026 KBO 네이버 스포츠 실제 실시간 팀 순위 API 직접 호출
     const response = await fetch('https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/2026/teams', {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      },
+      headers: NAVER_HEADERS,
       cache: 'no-store', // 실시간 최신성 보장
     });
 

@@ -1,3 +1,4 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import {
   SeasonHitterRecord,
   SeasonPitcherRecord,
@@ -6,12 +7,6 @@ import {
 } from '@/types/season';
 
 const BASE = 'https://api-gw.sports.naver.com/statistics/categories/kbo/seasons';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 type Raw = Record<string, unknown>;
 
@@ -23,7 +18,7 @@ const num = (v: unknown, digits?: number): number => {
 const str = (v: unknown): string => (typeof v === 'string' ? v : v == null ? '' : String(v));
 
 async function fetchJson(path: string, revalidate: number) {
-  const res = await fetch(`${BASE}${path}`, { headers: HEADERS, next: { revalidate } });
+  const res = await fetch(`${BASE}${path}`, { headers: NAVER_HEADERS, next: { revalidate } });
   if (!res.ok) throw new Error(`naver ${res.status} ${path}`);
   return res.json();
 }
@@ -127,7 +122,7 @@ function rankOnly<T extends { rank: number }>(rows: T[]): T[] {
  */
 export async function fetchSeasonRecords(year: number): Promise<SeasonRecords> {
   const isCurrent = year >= new Date().getFullYear();
-  const revalidate = isCurrent ? 300 : 60 * 60 * 24;
+  const revalidate = isCurrent ? REVALIDATE.season : REVALIDATE.archived;
 
   const [teams, hitters, pitchers] = await Promise.all([
     fetchJson(`/${year}/teams`, revalidate).catch(() => null),

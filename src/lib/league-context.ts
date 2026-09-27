@@ -1,10 +1,5 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import { inningsToOuts } from '@/lib/player-career';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 type Raw = Record<string, any>;
 
@@ -24,8 +19,8 @@ export interface LeagueYear {
 async function fetchPlayers(year: number, type: 'HITTER' | 'PITCHER', isCurrent: boolean) {
   const url = `https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/players?playerType=${type}&pageSize=500`;
   const res = await fetch(url, {
-    headers: HEADERS,
-    next: { revalidate: isCurrent ? 60 * 60 : 60 * 60 * 24 * 7 },
+    headers: NAVER_HEADERS,
+    next: { revalidate: isCurrent ? REVALIDATE.daily : REVALIDATE.archived },
   });
   if (!res.ok) throw new Error(`naver ${res.status}`);
   const json = await res.json();

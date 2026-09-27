@@ -1,10 +1,5 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import { ChampionshipPrediction, TeamOutcome, TeamStrength } from '@/types/prediction';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 /**
  * 모델 상수는 추정하지 않고 2008~2025 실제 경기에서 측정했다.
@@ -32,7 +27,7 @@ const num = (v: unknown): number => {
 };
 
 async function fetchJson(url: string, revalidate: number) {
-  const res = await fetch(url, { headers: HEADERS, next: { revalidate } });
+  const res = await fetch(url, { headers: NAVER_HEADERS, next: { revalidate } });
   if (!res.ok) throw new Error(`naver ${res.status}`);
   return res.json();
 }
@@ -267,7 +262,7 @@ export async function predictChampionship(
   iterations = 20000,
 ): Promise<ChampionshipPrediction | null> {
   const isCurrent = year >= new Date().getFullYear();
-  const revalidate = isCurrent ? 900 : 60 * 60 * 24;
+  const revalidate = isCurrent ? REVALIDATE.season : REVALIDATE.archived;
 
   const [standingsJson, hittersJson, pitchersJson] = await Promise.all([
     fetchJson(`https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/teams`, revalidate),

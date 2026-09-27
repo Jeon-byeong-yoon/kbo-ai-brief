@@ -1,3 +1,4 @@
+import { NAVER_HEADERS } from '@/lib/naver';
 import { NextRequest, NextResponse } from 'next/server';
 import { KBOGame, GameStatus } from '@/types/kbo';
 import { TEAMS } from '@/lib/mock-data';
@@ -13,10 +14,7 @@ export async function GET(request: NextRequest) {
       `https://api-gw.sports.naver.com/schedule/games` +
       `?fromDate=${requestedDate}&toDate=${requestedDate}&upperCategoryId=kbaseball&size=50`;
     const response = await fetch(url, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)',
-        'Referer': 'https://sports.naver.com/',
-      },
+      headers: NAVER_HEADERS,
       cache: 'no-store',
     });
 
@@ -29,10 +27,7 @@ export async function GET(request: NextRequest) {
       let detail = g;
       try {
         const detailRes = await fetch(`https://api-gw.sports.naver.com/schedule/games/${g.gameId}`, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko)',
-            'Referer': 'https://sports.naver.com/',
-          },
+          headers: NAVER_HEADERS,
           cache: 'no-store',
         });
         const detailJson = await detailRes.json();

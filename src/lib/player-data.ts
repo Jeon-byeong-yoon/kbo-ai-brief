@@ -1,3 +1,4 @@
+import { NAVER_HEADERS } from '@/lib/naver';
 import { BatterLeader, PitcherLeader, PlayerSearchResult } from '@/types/kbo';
 
 const NAVER_PLAYER_STATS_URL =
@@ -100,11 +101,7 @@ const fullTeamName = (player: NaverSeasonPlayerStat) =>
  */
 async function fetchPlayerType(playerType: 'PITCHER' | 'HITTER') {
   const response = await fetch(`${NAVER_PLAYER_STATS_URL}?playerType=${playerType}&pageSize=500`, {
-    headers: {
-      'User-Agent':
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
-        '(KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    },
+    headers: NAVER_HEADERS,
     cache: 'no-store',
   });
 

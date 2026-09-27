@@ -1,3 +1,4 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import {
   GamePreview,
   HotColdCell,
@@ -6,12 +7,6 @@ import {
   KeyPlayerVsLine,
   PreviewSide,
 } from '@/types/preview';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 type Raw = Record<string, any>;
 
@@ -69,8 +64,8 @@ function toKeyPlayer(raw: Raw | undefined): KeyPlayer | null {
  */
 export async function fetchGamePreview(gameId: string): Promise<GamePreview | null> {
   const res = await fetch(`https://api-gw.sports.naver.com/schedule/games/${gameId}/preview`, {
-    headers: HEADERS,
-    next: { revalidate: 600 },
+    headers: NAVER_HEADERS,
+    next: { revalidate: REVALIDATE.preview },
   });
   if (!res.ok) return null;
 

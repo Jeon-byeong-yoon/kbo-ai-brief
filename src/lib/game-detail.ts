@@ -1,3 +1,4 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import { GameStatus, InningScores, KBOGame, KBOTeam } from '@/types/kbo';
 import {
   LineupEntry,
@@ -8,12 +9,6 @@ import {
   TeamRheb,
 } from '@/types/live';
 import { findTeam } from '@/lib/team-assets';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 type Raw = Record<string, any>;
 
@@ -196,9 +191,9 @@ function toLiveState(relay: Raw, inning: string): LiveGameState | null {
 
 async function fetchJson(url: string, live: boolean) {
   const res = await fetch(url, {
-    headers: HEADERS,
+    headers: NAVER_HEADERS,
     // 진행 중인 경기는 캐시하면 안 된다. 끝난 경기는 더 이상 바뀌지 않는다.
-    ...(live ? { cache: 'no-store' as const } : { next: { revalidate: 300 } }),
+    ...(live ? { cache: 'no-store' as const } : { next: { revalidate: REVALIDATE.preview } }),
   });
   if (!res.ok) throw new Error(`naver ${res.status}`);
   return res.json();

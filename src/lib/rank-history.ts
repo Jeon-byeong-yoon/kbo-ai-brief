@@ -1,12 +1,7 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import { RankHistory, RankHistoryTeam } from '@/types/rank-history';
 import { fetchRegularSeasonGames } from '@/lib/head-to-head';
 import { findTeam } from '@/lib/team-assets';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 type Raw = Record<string, any>;
 type Rule = 'exclude-draws' | 'include-draws';
@@ -42,11 +37,11 @@ function detectRule(teams: Raw[]): Rule {
 
 export async function fetchRankHistory(year: number): Promise<RankHistory | null> {
   const isCurrent = year >= new Date().getFullYear();
-  const revalidate = isCurrent ? 60 * 60 : 60 * 60 * 24 * 7;
+  const revalidate = isCurrent ? REVALIDATE.daily : REVALIDATE.archived;
 
   const [standingsJson, games] = await Promise.all([
     fetch(`https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/teams`, {
-      headers: HEADERS,
+      headers: NAVER_HEADERS,
       next: { revalidate },
     }).then((r) => (r.ok ? r.json() : null)),
     fetchRegularSeasonGames(year),

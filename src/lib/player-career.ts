@@ -1,3 +1,4 @@
+import { NAVER_HEADERS, REVALIDATE } from '@/lib/naver';
 import {
   ADVANCED_FROM,
   CAREER_FROM,
@@ -7,12 +8,6 @@ import {
 } from '@/types/player-career';
 import { findTeam } from '@/lib/team-assets';
 import { fetchLeagueContext, LeagueYear } from '@/lib/league-context';
-
-const HEADERS = {
-  'User-Agent':
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-  Referer: 'https://sports.naver.com/',
-};
 
 /** 네이버가 KBO 기록을 주는 첫 시즌 */
 export const FIRST_SEASON = CAREER_FROM;
@@ -53,9 +48,9 @@ export function outsToInnings(outs: number): string {
 async function fetchSeason(year: number, type: 'HITTER' | 'PITCHER', isCurrent: boolean) {
   const url = `https://api-gw.sports.naver.com/statistics/categories/kbo/seasons/${year}/players?playerType=${type}&pageSize=500`;
   const res = await fetch(url, {
-    headers: HEADERS,
+    headers: NAVER_HEADERS,
     // 끝난 시즌은 더 바뀌지 않는다. 진행 중인 시즌만 짧게 잡는다.
-    next: { revalidate: isCurrent ? 600 : 60 * 60 * 24 * 7 },
+    next: { revalidate: isCurrent ? REVALIDATE.season : REVALIDATE.archived },
   });
   if (!res.ok) throw new Error(`naver ${res.status}`);
   const json = await res.json();
