@@ -6,6 +6,13 @@
 /** 고급 지표(WAR, wRC+, wOBA, WPA, BABIP)가 있는 첫 시즌. 그 전은 네이버가 주지 않는다. */
 export const ADVANCED_FROM = 2017;
 
+/**
+ * 네이버에서 선수 기록을 받을 수 있는 첫 시즌.
+ * 2007년은 선수 목록만 있고 팀 순위는 빈 응답이며 `teamName` 도 비어 있다.
+ * 2005~2006 은 0건, 2004 이전은 HTTP 400 이다.
+ */
+export const CAREER_FROM = 2007;
+
 export interface CareerBattingSeason {
   year: number;
   teamName: string;
@@ -28,6 +35,8 @@ export interface CareerBattingSeason {
   /** 2017년 이후만 있다. 없으면 null */
   wrcPlus: number | null;
   war: number | null;
+  /** 리그 평균 대비 OPS. 100 이 평균. 리그 기준선이 없으면 null */
+  opsPlus: number | null;
 }
 
 export interface CareerPitchingSeason {
@@ -50,6 +59,8 @@ export interface CareerPitchingSeason {
   whip: number;
   /** 2017년 이후만 있다. 없으면 null */
   war: number | null;
+  /** 리그 평균 대비 평균자책. 100 이 평균, 높을수록 좋다. 기준선이 없으면 null */
+  eraPlus: number | null;
 }
 
 export interface PlayerCareer {
@@ -70,4 +81,11 @@ export interface PlayerCareer {
   pitchingTotal: CareerPitchingSeason | null;
   /** 고급 지표가 없는 시즌이 커리어에 포함돼 있는지 */
   hasPreAdvancedSeasons: boolean;
+  /**
+   * 네이버가 아니라 사람이 넣은 기록인지. 2007년 이전 선수를 나중에 끼워 넣을 자리다.
+   * true 면 화면에 출처를 함께 표시한다.
+   */
+  manual?: boolean;
+  /** manual 일 때의 출처 */
+  source?: string;
 }

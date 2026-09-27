@@ -1,10 +1,12 @@
 import {
   ADVANCED_FROM,
+  CAREER_FROM,
   CareerBattingSeason,
   CareerPitchingSeason,
   PlayerCareer,
 } from '@/types/player-career';
 import { findTeam } from '@/lib/team-assets';
+import { fetchLeagueContext, LeagueYear } from '@/lib/league-context';
 
 const HEADERS = {
   'User-Agent':
@@ -13,7 +15,7 @@ const HEADERS = {
 };
 
 /** 네이버가 KBO 기록을 주는 첫 시즌 */
-export const FIRST_SEASON = 2008;
+export const FIRST_SEASON = CAREER_FROM;
 
 type Raw = Record<string, any>;
 
@@ -60,12 +62,30 @@ async function fetchSeason(year: number, type: 'HITTER' | 'PITCHER', isCurrent: 
   return (json?.result?.seasonPlayerStats ?? []) as Raw[];
 }
 
+/** 2007년 기록은 teamName 이 비어 있다. profile JSON 에서 꺼내 채운다. */
+function teamOf(r: Raw): { name: string; short: string } {
+  const direct = String(r.teamShortName || r.teamName || '');
+  if (direct) return { name: String(r.teamName || direct), short: direct };
+  let profile: Raw = {};
+  try {
+    profile = JSON.parse(String(r.profile ?? '{}'));
+  } catch {
+    profile = {};
+  }
+  const asset = findTeam(String(profile.teamCode ?? ''), String(profile.teamName ?? ''));
+  return {
+    name: asset?.name ?? String(profile.teamName ?? ''),
+    short: asset?.shortName ?? String(profile.teamName ?? ''),
+  };
+}
+
 function toBatting(r: Raw): CareerBattingSeason {
   const year = num(r.year);
+  const team = teamOf(r);
   return {
     year,
-    teamName: String(r.teamName ?? ''),
-    teamShortName: String(r.teamShortName || r.teamName || ''),
+    teamName: team.name,
+    teamShortName: team.short,
     games: num(r.hitterGameCount),
     atBats: num(r.hitterAb),
     hits: num(r.hitterHit),
@@ -83,16 +103,18 @@ function toBatting(r: Raw): CareerBattingSeason {
     ops: num(r.hitterOps),
     wrcPlus: advanced(year, r.hitterWrcPlus),
     war: advanced(year, r.hitterWar),
+    opsPlus: null,
   };
 }
 
 function toPitching(r: Raw): CareerPitchingSeason {
   const year = num(r.year);
   const outs = inningsToOuts(r.pitcherInning);
+  const team = teamOf(r);
   return {
     year,
-    teamName: String(r.teamName ?? ''),
-    teamShortName: String(r.teamShortName || r.teamName || ''),
+    teamName: team.name,
+    teamShortName: team.short,
     games: num(r.pitcherGameCount),
     wins: num(r.pitcherWin),
     losses: num(r.pitcherLose),
@@ -106,6 +128,7 @@ function toPitching(r: Raw): CareerPitchingSeason {
     era: num(r.pitcherEra),
     whip: num(r.pitcherWhip),
     war: advanced(year, r.pitcherWar),
+    eraPlus: null,
   };
 }
 
@@ -148,6 +171,7 @@ function battingTotal(rows: CareerBattingSeason[]): CareerBattingSeason | null {
     ops: obp + slg,
     wrcPlus: null,
     war: rows.some((r) => r.war !== null) ? warSum : null,
+    opsPlus: null,
   };
 }
 
@@ -182,7 +206,61 @@ function pitchingTotal(rows: CareerPitchingSeason[]): CareerPitchingSeason | nul
     era: innings > 0 ? (er * 9) / innings : 0,
     whip: whipWeighted,
     war: rows.some((r) => r.war !== null) ? warSum : null,
+    eraPlus: null,
   };
+}
+
+/**
+ * 시대 보정 지표.
+ *
+ * 리그 평균자책이 2012년 3.82, 2014년 5.22 로 크게 움직여서 ERA 를 그냥 비교하면
+ * 시대 차이가 선수 실력으로 보인다. 그래서 그 선수가 던진 **각 시즌의** 리그 평균으로
+ * 기대 자책점을 만들어 실제 자책점과 견준다. 한 시즌만 잘 던진 선수와 오래 던진
+ * 선수를 같은 기준에 놓는다.
+ *
+ *   ERA+ = (그 이닝을 리그 평균 투수가 던졌을 때의 자책점) / (실제 자책점) x 100
+ *   OPS+ = (출루율/리그출루율 + 장타율/리그장타율 - 1) x 100
+ *
+ * 100 이 리그 평균이고 높을수록 좋다. 리그 기준선이 없는 시즌은 null 로 둔다.
+ */
+function eraPlus(
+  rows: Array<{ year: number; outs: number; earnedRuns: number }>,
+  league: Map<number, LeagueYear>,
+): number | null {
+  let expected = 0;
+  let actual = 0;
+  for (const r of rows) {
+    const lg = league.get(r.year);
+    if (!lg || lg.era <= 0) continue;
+    expected += (lg.era * (r.outs / 3)) / 9;
+    actual += r.earnedRuns;
+  }
+  if (expected <= 0 || actual <= 0) return null;
+  return (expected / actual) * 100;
+}
+
+function opsPlus(
+  obp: number,
+  slg: number,
+  rows: Array<{ year: number; atBats: number }>,
+  league: Map<number, LeagueYear>,
+): number | null {
+  // 리그 기준선은 그 선수가 뛴 시즌들을 타수로 가중 평균한다.
+  let ab = 0;
+  let lgObp = 0;
+  let lgSlg = 0;
+  for (const r of rows) {
+    const lg = league.get(r.year);
+    if (!lg || lg.obp <= 0 || lg.slg <= 0) continue;
+    ab += r.atBats;
+    lgObp += lg.obp * r.atBats;
+    lgSlg += lg.slg * r.atBats;
+  }
+  if (ab <= 0) return null;
+  const baseObp = lgObp / ab;
+  const baseSlg = lgSlg / ab;
+  if (baseObp <= 0 || baseSlg <= 0) return null;
+  return (obp / baseObp + slg / baseSlg - 1) * 100;
 }
 
 /**
@@ -216,6 +294,14 @@ export async function fetchPlayerCareer(playerId: string): Promise<PlayerCareer 
   const batting = battingRaw.map(toBatting).sort((a, b) => a.year - b.year);
   const pitching = pitchingRaw.map(toPitching).sort((a, b) => a.year - b.year);
 
+  // 시대 보정. 뛴 시즌 범위만 받으면 되므로 커리어가 짧으면 호출도 적다.
+  const seasons = [...batting, ...pitching].map((r) => r.year);
+  const league = await fetchLeagueContext(Math.min(...seasons), Math.max(...seasons)).catch(
+    () => new Map(),
+  );
+  for (const r of pitching) r.eraPlus = eraPlus([r], league);
+  for (const r of batting) r.opsPlus = opsPlus(r.obp, r.slg, [r], league);
+
   // 가장 최근 시즌 기록에서 신상을 가져온다.
   const latest = [...battingRaw, ...pitchingRaw].sort((a, b) => num(b.year) - num(a.year))[0];
   let profile: Raw = {};
@@ -226,6 +312,11 @@ export async function fetchPlayerCareer(playerId: string): Promise<PlayerCareer 
   }
 
   const team = findTeam(String(profile.teamCode ?? ''), String(latest?.teamName ?? ''));
+
+  const bTotal = battingTotal(batting);
+  const pTotal = pitchingTotal(pitching);
+  if (pTotal) pTotal.eraPlus = eraPlus(pitching, league);
+  if (bTotal) bTotal.opsPlus = opsPlus(bTotal.obp, bTotal.slg, batting, league);
 
   return {
     playerId,
@@ -239,8 +330,8 @@ export async function fetchPlayerCareer(playerId: string): Promise<PlayerCareer 
     isRetired: String(latest?.isRetire ?? 'N') === 'Y',
     batting,
     pitching,
-    battingTotal: battingTotal(batting),
-    pitchingTotal: pitchingTotal(pitching),
+    battingTotal: bTotal,
+    pitchingTotal: pTotal,
     hasPreAdvancedSeasons: [...batting, ...pitching].some((r) => r.year < ADVANCED_FROM),
   };
 }
