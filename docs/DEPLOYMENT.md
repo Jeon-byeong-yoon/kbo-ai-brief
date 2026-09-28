@@ -1,6 +1,14 @@
-# 배포 계획
+# 배포
 
-아직 배포하지 않았다. 이 문서는 무엇을 골라야 하고 무엇이 걸림돌인지 정리한 것이다.
+**Vercel 에 호스팅하고, GitHub Actions 는 검증만 맡는다.** 2026-09-28 에 정했다.
+
+취업용 포트폴리오라는 점이 기준이었다. 이력서의 링크가 죽어 있는 것이 가장 나쁘므로
+"안 죽고 돈 안 드는 것"을 화려한 구성보다 앞에 뒀다. 프론트엔드 기준으로 Next.js +
+Vercel 은 표준 조합이라 설명할 거리도 따로 필요 없다. 인프라 직무를 노린다면
+Docker + Railway 쪽이 대화거리를 더 만들지만, 그건 이 프로젝트의 목적이 아니다.
+
+둘을 섞지 않은 이유도 있다. 배포 권한을 Actions 에 주지 않아도 되고, 검증이 실패해도
+Vercel 프리뷰는 따로 떠서 화면은 볼 수 있다.
 
 ## 먼저: GitHub Pages 로는 안 된다
 
@@ -9,13 +17,28 @@
 ```
 Route (app)
 ┌ ○ /
+├ ○ /_not-found
 ├ ƒ /api/ai-brief
 ├ ƒ /api/games
 ├ ƒ /api/games/[id]
+├ ƒ /api/games/[id]/pitches
+├ ƒ /api/games/[id]/preview
+├ ƒ /api/players
+├ ƒ /api/players/[id]
+├ ƒ /api/players/search
+├ ƒ /api/predictions/[year]
 ├ ƒ /api/schedule
 ├ ƒ /api/seasons/[year]
+├ ƒ /api/seasons/[year]/head-to-head
+├ ƒ /api/seasons/[year]/rank-history
+├ ƒ /api/standings
+├ ƒ /api/teams/[code]
+├ ○ /compare
 ├ ƒ /games/[id]
-└ ○ /records
+├ ƒ /players/[id]
+├ ○ /predictions
+├ ○ /records
+└ ƒ /teams/[code]
 
 ○  (Static)   미리 만들어 둔 정적 파일
 ƒ  (Dynamic)  요청이 올 때 서버에서 렌더링
@@ -46,13 +69,29 @@ Vercel 에 맡기고 Actions 는 검증용으로 두는 조합이 깔끔하다.
 
 ## 진행 순서
 
-1. **빌드 통과 확인** — 완료. 죽은 코드를 걷어내고 `npm run build` 가 통과한다
-2. **호스팅 결정** — 미정
-3. **환경변수 등록** — `OPENAI_API_KEY` 를 호스팅의 환경변수 또는 GitHub Secrets 에
-   넣는다. 저장소에 커밋하지 않는다. 현재는 `.env.local` 에만 있다
-4. **Actions 워크플로 작성** — push 시 `npm ci` → 타입체크 → `npm run build`.
-   배포 단계는 호스팅에 맞춰 붙인다
-5. **배포 후 네이버 API 소통 확인** — 아래 참고
+1. **빌드 통과 확인** — 완료
+2. **호스팅 결정** — 완료. Vercel
+3. **Actions 워크플로 작성** — 완료. `.github/workflows/ci.yml` 에서
+   `npm ci` → 타입체크 → `npm test` → `npm run build` 를 돌린다
+4. **Vercel 연결** — 남음. 아래 "직접 해야 하는 것" 참고
+5. **환경변수 등록** — 남음. `OPENAI_API_KEY`
+6. **배포 후 네이버 API 소통 확인** — 남음. 아래 참고
+
+## 직접 해야 하는 것
+
+코드로 끝나지 않는 부분이다. 브라우저에서 계정을 연결해야 한다.
+
+1. [vercel.com](https://vercel.com) 에 GitHub 계정으로 로그인
+2. **Add New → Project** 에서 이 저장소를 고른다. Next.js 는 자동으로 인식되므로
+   빌드 설정을 건드릴 것이 없다
+3. **Environment Variables** 에 `OPENAI_API_KEY` 를 넣는다.
+   없어도 AI 브리핑만 빠지고 나머지는 동작한다
+4. **Deploy** 를 누른다
+5. GitHub 저장소의 **Settings → Secrets and variables → Actions** 에도
+   `OPENAI_API_KEY` 를 넣는다. Actions 의 빌드 단계에서 쓴다
+
+이후 `main` 에 push 하면 Vercel 이 배포하고, 다른 브랜치나 PR 은 프리뷰 URL 이
+따로 생긴다.
 
 ## 배포 전에 풀어야 할 것
 
@@ -87,6 +126,10 @@ IP 기반 제한도 있을 수 있다고 본다.
 
 `cache: 'no-store'` 로 전부 돌리는 방법도 있지만, 한 화면을 그릴 때 네이버를 여러 번
 때리게 되므로 위 2번을 먼저 본다.
+
+캐시 주기는 그 뒤에 `src/lib/naver.ts` 의 `REVALIDATE` 로 모았다. **끝난 시즌과 끝난
+경기는 더 바뀌지 않으므로 30일**로 늘렸고 진행 중인 것만 짧게 둔다. 호출이 줄어든
+만큼 아래의 IP 차단 위험도 함께 줄었다.
 
 ### 비공개 API 의존이라는 전제
 
