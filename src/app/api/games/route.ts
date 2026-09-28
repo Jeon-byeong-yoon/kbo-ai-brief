@@ -78,28 +78,10 @@ export async function GET(request: NextRequest) {
         broadcast: detail.broadChannel || '미정',
       };
 
-      // 임시 AI 프리뷰/리뷰 데이터 (데모용)
-      if (status === 'SCHEDULED') {
-        game.aiPreview = {
-          id: `ai-p-${g.gameId}`,
-          gameId: g.gameId,
-          headline: `${awayTeam.shortName} ${awayStarter} vs ${homeTeam.shortName} ${homeStarter}, ${detail.stadium || '구장'} 맞대결!`,
-          summary: `오늘 ${detail.stadium || '구장'}에서 ${awayTeam.name}와 ${homeTeam.name}의 경기가 열립니다. 선발투수 ${awayStarter}와 ${homeStarter}의 맞대결이 주목됩니다.`,
-          keyFactors: [`${awayStarter}의 최근 호투 여부`, `${homeStarter}의 홈 경기 방어율`, `양 팀 타선의 집중력`],
-          pitcherAnalysis: `${awayStarter}와 ${homeStarter} 모두 각 팀의 핵심 투수로, 초반 기싸움이 승패를 가를 전망입니다.`,
-          updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
-        };
-      } else if (status === 'FINISHED') {
-         game.aiReview = {
-          id: `ai-r-${g.gameId}`,
-          gameId: g.gameId,
-          headline: `${awayTeam.shortName} ${game.awayScore}-${game.homeScore} ${homeTeam.shortName} 경기 종료!`,
-          summary: `${awayTeam.name}와 ${homeTeam.name}의 치열한 승부 끝에 경기가 종료되었습니다.`,
-          keyFactors: ['선발 투수의 퀄리티 스타트 여부', '중심 타선의 결정적 한 방', '불펜의 리드 수성'],
-          pitcherAnalysis: `선발투수들의 역투 속에서 불펜진의 활약이 돋보인 경기였습니다.`,
-          updatedAt: new Date().toISOString().slice(0, 16).replace('T', ' '),
-        };
-      }
+      // 브리핑을 열 수 있는지만 표시한다. 경기 전이면 선발·팀 흐름, 끝난 경기면
+      // 실제 기록을 모달에서 받아 보여준다. 여기서 문장을 만들지 않는다.
+      game.hasPreview = status === 'SCHEDULED';
+      game.hasResult = status === 'FINISHED';
 
       return game;
     }));

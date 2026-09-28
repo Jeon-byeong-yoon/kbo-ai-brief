@@ -35,31 +35,6 @@ export const MOCK_GAMES: KBOGame[] = [
     awayPitcher: '류현진',
     homePitcher: '임찬규',
     broadcast: 'SPOTV',
-    aiReview: {
-      id: 'ai-r-1',
-      gameId: 'game-20260723-1',
-      headline: '[실시간 요약] 7회말 터진 역전 적시타, LG 1점 차 리드 잡다',
-      summary: '한화 류현진의 6이닝 무실점 호투에도 불구하고 7회말 LG 불펜 공격진의 극적 2점 적시타로 역전에 성공했습니다.',
-      keyFactors: [
-        '류현진 6이닝 7K 1실점 짠물 투구',
-        '7회말 LG 중심타선 집중 3안타 연속타',
-        '한화 불펜진의 득점권 주자 허용 급증',
-      ],
-      pitcherAnalysis: '류현진은 특유의 체인지업으로 타자들을 요리했으나, 7회말 구위 저하 이후 교체 타이밍이 다소 아쉬웠습니다.',
-      updatedAt: '2026-07-23 20:45',
-    },
-    aiPreview: {
-      id: 'ai-p-1',
-      gameId: 'game-20260723-1',
-      headline: '류현진 vs 임찬규, 잠실 빅매치 베테랑 대결',
-      summary: '한화의 에이스 류현진과 LG의 안정적인 선발 임찬규의 마운드 대결입니다.',
-      keyFactors: [
-        '한화 중심 타선의 득점권 타율 상승세',
-        'LG 불펜진의 최근 연속 무실점 기록 유지',
-      ],
-      pitcherAnalysis: '좌완 류현진의 체인지업을 LG 우타진이 어떻게 공략하느냐가 승부처입니다.',
-      updatedAt: '2026-07-23 12:00',
-    },
   },
   {
     id: 'game-20260723-2',
@@ -74,19 +49,6 @@ export const MOCK_GAMES: KBOGame[] = [
     awayPitcher: '원태인',
     homePitcher: '양현종',
     broadcast: 'KBS N SPORTS',
-    aiReview: {
-      id: 'ai-r-2',
-      gameId: 'game-20260723-2',
-      headline: '양현종 7이닝 1실점 압도적 호투, KIA 삼성 제압하고 선두 사수',
-      summary: 'KIA 양현종이 7이닝 8탈삼진 1실점으로 삼성 타선을 봉쇄하고 시즌 10승을 달성했습니다.',
-      keyFactors: [
-        '양현종의 QS+ 대호투 및 통산 최다 승수 경신',
-        'KIA 나성범 3점 홈런 포함 4타점 폭발',
-        '삼성 잔루 9개 득점권 침묵',
-      ],
-      pitcherAnalysis: '양현종은 직구 최고 147km/h와 슬라이더 조합으로 결정구 삼진 8개를 솎아냈습니다.',
-      updatedAt: '2026-07-23 21:30',
-    },
   },
   {
     id: 'game-20260723-3',
@@ -101,18 +63,6 @@ export const MOCK_GAMES: KBOGame[] = [
     awayPitcher: '김광현',
     homePitcher: '고영표',
     broadcast: 'MBC SPORTS+',
-    aiReview: {
-      id: 'ai-r-3',
-      gameId: 'game-20260723-3',
-      headline: 'SSG 8회초 5득점 대역전극, 김광현 시즌 8승 달성',
-      summary: 'SSG가 3-5로 뒤지던 8회초 만루 찬스에서 싹쓸이 2루타를 터뜨리며 역전승을 거두었습니다.',
-      keyFactors: [
-        '8회초 SSG 타선의 놀라운 득점 집중력',
-        '김광현 6이닝 3실점 QS 퀄리티스타트',
-      ],
-      pitcherAnalysis: '고영표는 체인지업이 살짝 뜨면서 8회 고전을 면치 못했습니다.',
-      updatedAt: '2026-07-23 21:50',
-    },
   },
   {
     id: 'game-20260723-4',
@@ -127,18 +77,6 @@ export const MOCK_GAMES: KBOGame[] = [
     awayPitcher: '곽빈',
     homePitcher: '카스타노',
     broadcast: 'SBS SPORTS',
-    aiPreview: {
-      id: 'ai-p-4',
-      gameId: 'game-20260723-4',
-      headline: '곽빈 vs 카스타노, 중위권 탈출을 걸어라!',
-      summary: '5위 자리를 두고 맞붙는 두산과 NC의 치열한 중위권 분수령전입니다.',
-      keyFactors: [
-        '곽빈의 최근 3경기 연속 퀄리티스타트 피칭',
-        'NC 공룡 타선의 좌타 상대 타율 상승세',
-      ],
-      pitcherAnalysis: '강속구 투수 곽빈과 제구파 카스타노의 극명한 스타일 대결이 기대됩니다.',
-      updatedAt: '2026-07-23 11:30',
-    },
   },
 ];
 
