@@ -109,11 +109,11 @@ type DepthCoverage = 'full' | 'pitcher-only' | 'none';
  * 밀어 버린다. 실제로 투수 WAR 만 있는 2014~2016 은 리그 평균 뎁스가 .392,
  * 둘 다 있는 2017년 이후는 .531 로 나와 서로 다른 모델이 된다.
  */
-function depthRate(war: number, leagueMeanWar: number): number {
+export function depthRate(war: number, leagueMeanWar: number): number {
   return 0.5 + (war - leagueMeanWar) / MODEL.seasonGames;
 }
 
-function toStrength(
+export function toStrength(
   t: Raw,
   war: number,
   leagueMeanWar: number,
@@ -167,7 +167,7 @@ function toStrength(
  * log5 — 실력이 각각 a, b 인 두 팀이 붙었을 때 a 가 이길 확률.
  * 홈 어드밴티지는 측정한 홈 승률만큼 오즈에 곱해서 반영한다.
  */
-function winProbability(a: number, b: number, aIsHome: boolean): number {
+export function winProbability(a: number, b: number, aIsHome: boolean): number {
   const base = (a - a * b) / (a + b - 2 * a * b);
   const hfa = MODEL.homeWinRate / (1 - MODEL.homeWinRate);
   const odds = (base / (1 - base)) * (aIsHome ? hfa : 1 / hfa);

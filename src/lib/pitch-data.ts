@@ -18,7 +18,7 @@ export const PLATE_HALF_WIDTH = 0.83;
  * 릴리스 시점 구속. 속도 벡터의 크기다.
  * ptsOptions 의 vx0/vy0/vz0 은 y0(보통 55ft) 지점에서의 ft/s 다.
  */
-function releaseSpeed(p: Raw): number {
+export function releaseSpeed(p: Raw): number {
   const v = Math.sqrt(num(p.vx0) ** 2 + num(p.vy0) ** 2 + num(p.vz0) ** 2);
   return v * FT_PER_S_TO_KMH;
 }
@@ -36,7 +36,7 @@ function releaseSpeed(p: Raw): number {
  * 투수는 타자 쪽(y 감소 방향)으로 던지므로 vy0 은 음수다. 두 근 중 먼저
  * 도달하는 쪽을 쓴다.
  */
-function plateHeight(p: Raw): number | null {
+export function plateHeight(p: Raw): number | null {
   const y0 = num(p.y0);
   const vy0 = num(p.vy0);
   const ay = num(p.ay);
@@ -55,7 +55,7 @@ function plateHeight(p: Raw): number | null {
 }
 
 /** 중계 텍스트("볼", "헛스윙")를 분류한다. 실제로 나오는 어휘는 7가지뿐이다. */
-function classify(text: string): PitchResult {
+export function classify(text: string): PitchResult {
   if (text.includes('헛스윙')) return 'swinging-strike';
   if (text.includes('파울')) return 'foul';
   if (text.includes('타격')) return 'in-play';

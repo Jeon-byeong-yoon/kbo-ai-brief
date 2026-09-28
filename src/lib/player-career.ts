@@ -128,7 +128,7 @@ function toPitching(r: Raw): CareerPitchingSeason {
 }
 
 /** 합계. 비율 지표는 더하면 안 되므로 누적값에서 다시 계산한다. */
-function battingTotal(rows: CareerBattingSeason[]): CareerBattingSeason | null {
+export function battingTotal(rows: CareerBattingSeason[]): CareerBattingSeason | null {
   if (rows.length === 0) return null;
   const s = <K extends keyof CareerBattingSeason>(k: K) =>
     rows.reduce((a, r) => a + (r[k] as number), 0);
@@ -170,7 +170,7 @@ function battingTotal(rows: CareerBattingSeason[]): CareerBattingSeason | null {
   };
 }
 
-function pitchingTotal(rows: CareerPitchingSeason[]): CareerPitchingSeason | null {
+export function pitchingTotal(rows: CareerPitchingSeason[]): CareerPitchingSeason | null {
   if (rows.length === 0) return null;
   const s = <K extends keyof CareerPitchingSeason>(k: K) =>
     rows.reduce((a, r) => a + (r[k] as number), 0);
@@ -218,7 +218,7 @@ function pitchingTotal(rows: CareerPitchingSeason[]): CareerPitchingSeason | nul
  *
  * 100 이 리그 평균이고 높을수록 좋다. 리그 기준선이 없는 시즌은 null 로 둔다.
  */
-function eraPlus(
+export function eraPlus(
   rows: Array<{ year: number; outs: number; earnedRuns: number }>,
   league: Map<number, LeagueYear>,
 ): number | null {
@@ -234,7 +234,7 @@ function eraPlus(
   return (expected / actual) * 100;
 }
 
-function opsPlus(
+export function opsPlus(
   obp: number,
   slg: number,
   rows: Array<{ year: number; atBats: number }>,
