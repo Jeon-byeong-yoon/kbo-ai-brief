@@ -8,9 +8,11 @@
   <img src="https://img.shields.io/badge/OpenAI-API-412991?style=for-the-badge&logo=openai&logoColor=white" alt="OpenAI" />
 </p>
 
-KBO 리그의 경기 일정과 스코어, 팀 순위와 선수 기록, 연도별 기록실, 그리고 AI 관전
-포인트를 한 화면에서 보는 야구 정보 대시보드입니다. 데이터는 네이버 스포츠 KBO API
+KBO 리그의 경기 일정과 스코어, 팀 순위와 선수 기록, 연도별 기록실, 그리고 경기
+브리핑을 한 화면에서 보는 야구 정보 대시보드입니다. 데이터는 네이버 스포츠 KBO API
 에서 실시간으로 받아옵니다.
+
+**배포: https://kbo-ai-brief-three.vercel.app**
 
 > **개인 학습용 프로젝트입니다.**
 >
