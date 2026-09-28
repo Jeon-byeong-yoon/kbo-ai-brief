@@ -34,3 +34,10 @@ yarn-error.log*
 next-env.d.ts
 
 .venv/
+
+# 조사용 임시 스크립트
+# 네이버 비공개 API 의 동작을 확인할 때 쓰는 일회성 파일들이다.
+# 알아낸 내용은 docs/DATA-SOURCES.md 에 정리하고 스크립트 자체는 커밋하지 않는다.
+test_api.py
+scratch/
+*.local.py
