@@ -11,7 +11,7 @@ const num = (v: unknown): number => {
   return Number.isFinite(n) ? n : 0;
 };
 
-function rate(rule: Rule, w: number, l: number, d: number): number {
+export function rate(rule: Rule, w: number, l: number, d: number): number {
   const denominator = rule === 'exclude-draws' ? w + l : w + l + d;
   return denominator > 0 ? w / denominator : 0;
 }
@@ -22,7 +22,7 @@ function rate(rule: Rule, w: number, l: number, d: number): number {
  * 무승부를 승률에 넣을지는 KBO 규정이 시대마다 달랐다. 최종 성적으로 두 규정을
  * 모두 계산해서 네이버가 준 `wra` 와 맞는 쪽을 고른다. 추측하지 않고 대조한다.
  */
-function detectRule(teams: Raw[]): Rule {
+export function detectRule(teams: Raw[]): Rule {
   const fits = (rule: Rule) =>
     teams.every((t) => {
       const mine = rate(rule, num(t.winGameCount), num(t.loseGameCount), num(t.drawnGameCount));

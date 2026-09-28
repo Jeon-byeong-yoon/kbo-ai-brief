@@ -1,0 +1,35 @@
+name: CI
+
+# 배포는 Vercel 이 GitHub 연동으로 알아서 한다. 여기서는 검증만 한다.
+# 둘을 섞지 않는 이유는 배포 권한을 Actions 에 주지 않아도 되고,
+# 검증이 실패해도 Vercel 프리뷰는 따로 떠서 화면을 볼 수 있기 때문이다.
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      # package-lock.json 그대로 설치한다. 버전이 조용히 올라가지 않는다.
+      - run: npm ci
+
+      - name: 타입체크
+        run: npx tsc --noEmit
+
+      - name: 테스트
+        run: npm test
+
+      - name: 빌드
+        run: npm run build
+        env:
+          # 빌드 자체는 키 없이도 통과한다. AI 브리핑만 런타임에 비활성이 된다.
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
