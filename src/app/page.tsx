@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { MatchCard } from '@/components/MatchCard';
 import { StandingsTable } from '@/components/StandingsTable';
@@ -10,6 +11,7 @@ import { PlayerSearch } from '@/components/PlayerSearch';
 import { AIBriefModal } from '@/components/AIBriefModal';
 import { DateStrip } from '@/components/DateStrip';
 import { ChampionBanner } from '@/components/ChampionBanner';
+import { PostseasonPreviewCard } from '@/components/PostseasonPreviewCard';
 import { ChartIcon, HistoryIcon, SearchIcon, TrophyIcon } from '@/components/ui/Icons';
 import { formatDateLabel, todayString } from '@/lib/date';
 import {
@@ -191,6 +193,7 @@ export default function HomePage() {
 
       <main className="mx-auto flex max-w-shell flex-col gap-5 px-4 pt-6 sm:px-6 lg:px-8">
         <ChampionBanner />
+        <PostseasonPreviewCard />
         {selectedDate && (
           <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} today={today} />
         )}
@@ -256,16 +259,44 @@ export default function HomePage() {
             ) : sortedFilteredGames.length === 0 ? (
               <div className="rounded-card border border-line bg-surface p-12 text-center shadow-card">
                 <h4 className="text-sm font-semibold text-fg">선택한 조건의 경기가 없습니다</h4>
-                <p className="mt-1 text-[13px] text-fg2">다른 날짜나 구단 필터를 선택해 보세요.</p>
-                <button
-                  onClick={() => {
-                    setSelectedTeam('ALL');
-                    setStatusFilter('ALL');
-                  }}
-                  className="mt-4 rounded-[9px] bg-surface2 px-3.5 py-2 text-[12.5px] font-semibold text-fg transition-colors hover:bg-track"
-                >
-                  필터 초기화
-                </button>
+                <p className="mt-1 text-[13px] text-fg2">
+                  2026 시즌은 11월 8일 한국시리즈 5차전을 끝으로 종료되었습니다.
+                </p>
+                <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedDate('2026-11-08');
+                      setSelectedTeam('ALL');
+                      setStatusFilter('ALL');
+                    }}
+                    className="rounded-[9px] bg-accent-soft px-3.5 py-2 text-[12.5px] font-semibold text-accent transition-colors hover:opacity-80"
+                  >
+                    한국시리즈 최종전(11.08) 보기
+                  </button>
+                  <Link
+                    href="/postseason"
+                    className="rounded-[9px] bg-surface2 px-3.5 py-2 text-[12.5px] font-semibold text-fg transition-colors hover:bg-track"
+                  >
+                    포스트시즌 대진표
+                  </Link>
+                  <Link
+                    href="/fa"
+                    className="rounded-[9px] bg-surface2 px-3.5 py-2 text-[12.5px] font-semibold text-fg transition-colors hover:bg-track"
+                  >
+                    2027 FA 시장
+                  </Link>
+                  {(selectedTeam !== 'ALL' || statusFilter !== 'ALL') && (
+                    <button
+                      onClick={() => {
+                        setSelectedTeam('ALL');
+                        setStatusFilter('ALL');
+                      }}
+                      className="rounded-[9px] bg-surface2 px-3.5 py-2 text-[12.5px] font-semibold text-fg2 transition-colors hover:bg-track"
+                    >
+                      필터 초기화
+                    </button>
+                  )}
+                </div>
               </div>
             ) : (
               <div className="flex flex-col gap-3">

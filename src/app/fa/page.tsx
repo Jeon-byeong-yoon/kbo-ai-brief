@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Header } from '@/components/Header';
 import { ChampionBanner } from '@/components/ChampionBanner';
 import { TeamBadge } from '@/components/ui/TeamBadge';
@@ -10,17 +11,31 @@ import {
   FA_2028_CANDIDATES,
   FA_AS_OF,
   FA_SOURCES,
+  TEAM_NEEDS_2026,
   predictDestination,
   type FAPlayer,
+  type FAPositionRole,
 } from '@/lib/fa-market';
 
 type Season = '2027' | '2028';
 type Status = 'all' | 'signed' | 'pending';
+type RoleFilter = 'ALL' | FAPositionRole;
+
+const ROLES: readonly RoleFilter[] = ['ALL', '포수', '내야수', '외야수', '선발', '불펜'];
 
 const teamName = (code: TeamCode) => TEAM_ASSETS[code].shortName;
 
 function SourceLink({ href, children }: { href: string; children: React.ReactNode }) {
-  return <a href={href} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent hover:underline">{children} ↗</a>;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="font-semibold text-accent hover:underline"
+    >
+      {children} ↗
+    </a>
+  );
 }
 
 export default function FAMarketPage() {
@@ -28,6 +43,7 @@ export default function FAMarketPage() {
   const [season, setSeason] = useState<Season>('2027');
   const [status, setStatus] = useState<Status>('all');
   const [team, setTeam] = useState<TeamCode | 'ALL'>('ALL');
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>('ALL');
   const [query, setQuery] = useState('');
   const [selectedName, setSelectedName] = useState<string | null>(null);
 
@@ -35,14 +51,27 @@ export default function FAMarketPage() {
     setFavoriteTeam(localStorage.getItem('kbo_favorite_team') ?? 'NONE');
   }, []);
 
-  const current = useMemo(() => FA_2027
-    .filter((player) => team === 'ALL' || player.team === team)
-    .filter((player) => player.name.includes(query.trim()))
-    .filter((player) => status === 'all' || (status === 'signed' ? !!player.contract : !player.contract))
-    .sort((a, b) => Number(!!b.contract) - Number(!!a.contract)), [team, query, status]);
-  const next = useMemo(() => FA_2028_CANDIDATES
-    .filter((player) => team === 'ALL' || player.team === team)
-    .filter((player) => player.name.includes(query.trim())), [team, query]);
+  const current = useMemo(
+    () =>
+      FA_2027
+        .filter((player) => team === 'ALL' || player.team === team)
+        .filter((player) => roleFilter === 'ALL' || player.stats.role === roleFilter)
+        .filter((player) => player.name.includes(query.trim()))
+        .filter((player) => status === 'all' || (status === 'signed' ? !!player.contract : !player.contract))
+        .sort((a, b) => Number(!!b.contract) - Number(!!a.contract) || b.stats.war - a.stats.war),
+    [team, roleFilter, query, status],
+  );
+
+  const next = useMemo(
+    () =>
+      FA_2028_CANDIDATES
+        .filter((player) => team === 'ALL' || player.team === team)
+        .filter((player) => roleFilter === 'ALL' || player.stats.role === roleFilter)
+        .filter((player) => player.name.includes(query.trim()))
+        .sort((a, b) => b.stats.war - a.stats.war),
+    [team, roleFilter, query],
+  );
+
   const selected = FA_2027.find((player) => player.name === selectedName && !player.contract);
   const prediction = selected ? predictDestination(selected) : null;
   const signedCount = FA_2027.filter((player) => player.contract).length;
@@ -69,7 +98,7 @@ export default function FAMarketPage() {
           </div>
           <h1 className="mt-3 text-[26px] font-bold tracking-[-0.04em] text-fg sm:text-[32px]">KBO FA 시장</h1>
           <p className="mt-2 max-w-3xl text-[13.5px] leading-relaxed text-fg2">
-            공식 승인 선수의 계약 현황과 다음 시즌 예상 후보를 함께 봅니다. 계약 금액은 옵션을 포함한 최대 총액입니다.
+            공식 승인 선수의 2026 시즌 성적·계약 현황과 다음 시즌 예상 후보를 함께 봅니다. 미계약 선수는 선수 WAR·10개 구단 포지션별 WAR 결손도·FA 보상 등급을 결합한 데이터 모델로 예상 행선지 Top 3를 계산합니다.
           </p>
           <div className="mt-6 grid grid-cols-3 gap-2 sm:gap-3">
             {[
@@ -79,16 +108,30 @@ export default function FAMarketPage() {
             ].map(([label, count, unit]) => (
               <div key={label} className="rounded-control border border-line bg-surface2 px-3 py-3 sm:px-5">
                 <p className="text-xs text-fg2">{label}</p>
-                <p className="tnum mt-1 text-[22px] font-bold tracking-[-0.04em] text-fg sm:text-[27px]">{count}<span className="ml-1 text-sm font-medium text-fg3">{unit}</span></p>
+                <p className="tnum mt-1 text-[22px] font-bold tracking-[-0.04em] text-fg sm:text-[27px]">
+                  {count}
+                  <span className="ml-1 text-sm font-medium text-fg3">{unit}</span>
+                </p>
               </div>
             ))}
           </div>
         </section>
 
         <div className="flex gap-2 border-b border-line" role="tablist" aria-label="FA 시즌">
-          {([['2027', '2027 FA · 현재 시장'], ['2028', '2028 FA · 예상 후보']] as const).map(([value, label]) => (
-            <button key={value} type="button" role="tab" aria-selected={season === value} onClick={() => changeSeason(value)}
-              className={`border-b-2 px-3 pb-3 pt-1 text-[13px] font-semibold transition-colors sm:px-5 sm:text-sm ${season === value ? 'border-accent text-accent' : 'border-transparent text-fg2 hover:text-fg'}`}>
+          {([
+            ['2027', '2027 FA · 현재 시장'],
+            ['2028', '2028 FA · 예상 후보'],
+          ] as const).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={season === value}
+              onClick={() => changeSeason(value)}
+              className={`border-b-2 px-3 pb-3 pt-1 text-[13px] font-semibold transition-colors sm:px-5 sm:text-sm ${
+                season === value ? 'border-accent text-accent' : 'border-transparent text-fg2 hover:text-fg'
+              }`}
+            >
               {label}
             </button>
           ))}
@@ -97,25 +140,71 @@ export default function FAMarketPage() {
         <section className="rounded-card border border-line bg-surface shadow-card">
           <div className="flex flex-col gap-3 border-b border-hair p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
             <div>
-              <h2 className="text-[17px] font-bold tracking-[-0.025em] text-fg">{season === '2027' ? '2027 FA 승인 선수' : '2028 FA 예상 후보'}</h2>
-              <p className="mt-0.5 text-xs text-fg3">{season === '2027' ? 'KBO 공식 승인 22명 · 계약 발표는 확인된 4건만 반영' : 'KBO 공식 공시 전 · 비공식 참고 목록이며 대상은 달라질 수 있음'}</p>
+              <h2 className="text-[17px] font-bold tracking-[-0.025em] text-fg">
+                {season === '2027' ? '2027 FA 승인 선수' : '2028 FA 예상 후보'}
+              </h2>
+              <p className="mt-0.5 text-xs text-fg3">
+                {season === '2027'
+                  ? 'KBO 공식 승인 22명 · 계약 발표는 확인된 4건만 반영 · 2026 시즌 WAR 순 정렬'
+                  : 'KBO 공식 공시 전 · 비공식 참고 목록이며 2026 시즌 WAR 순으로 정렬'}
+              </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <input type="search" aria-label="선수 검색" placeholder="선수 검색" value={query} onChange={(e) => setQuery(e.target.value)}
-                className="min-w-0 flex-1 rounded-control border border-line bg-surface px-3 py-2 text-[13px] text-fg outline-none placeholder:text-fg3 sm:w-40 sm:flex-none" />
-              <select aria-label="구단 필터" value={team} onChange={(e) => setTeam(e.target.value as TeamCode | 'ALL')}
-                className="rounded-control border border-line bg-surface px-3 py-2 text-[13px] text-fg">
+              <input
+                type="search"
+                aria-label="선수 검색"
+                placeholder="선수 검색"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="min-w-0 flex-1 rounded-control border border-line bg-surface px-3 py-2 text-[13px] text-fg outline-none placeholder:text-fg3 sm:w-40 sm:flex-none"
+              />
+              <select
+                aria-label="포지션 필터"
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value as RoleFilter)}
+                className="rounded-control border border-line bg-surface px-3 py-2 text-[13px] text-fg"
+              >
+                <option value="ALL">전체 포지션</option>
+                {ROLES.filter((r) => r !== 'ALL').map((role) => (
+                  <option key={role} value={role}>
+                    {role}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="구단 필터"
+                value={team}
+                onChange={(e) => setTeam(e.target.value as TeamCode | 'ALL')}
+                className="rounded-control border border-line bg-surface px-3 py-2 text-[13px] text-fg"
+              >
                 <option value="ALL">전체 구단</option>
-                {TEAM_CODES.map((code) => <option key={code} value={code}>{TEAM_ASSETS[code].name}</option>)}
+                {TEAM_CODES.map((code) => (
+                  <option key={code} value={code}>
+                    {TEAM_ASSETS[code].name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
 
           {season === '2027' && (
             <div className="flex gap-1 overflow-x-auto px-4 pt-4 sm:px-5">
-              {([['all', '전체', FA_2027.length], ['signed', '계약 완료', signedCount], ['pending', '미정', FA_2027.length - signedCount]] as const).map(([value, label, count]) => (
-                <button key={value} type="button" onClick={() => { setStatus(value); setSelectedName(null); }}
-                  className={`shrink-0 rounded-chip px-3 py-1.5 text-[12.5px] ${status === value ? 'bg-accent-soft font-semibold text-accent' : 'font-medium text-fg2 hover:bg-surface2'}`}>
+              {([
+                ['all', '전체', FA_2027.length],
+                ['signed', '계약 완료', signedCount],
+                ['pending', '미정', FA_2027.length - signedCount],
+              ] as const).map(([value, label, count]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    setStatus(value);
+                    setSelectedName(null);
+                  }}
+                  className={`shrink-0 rounded-chip px-3 py-1.5 text-[12.5px] ${
+                    status === value ? 'bg-accent-soft font-semibold text-accent' : 'font-medium text-fg2 hover:bg-surface2'
+                  }`}
+                >
                   {label} <span className="tnum">{count}</span>
                 </button>
               ))}
@@ -124,43 +213,130 @@ export default function FAMarketPage() {
 
           <div className="p-4 sm:p-5">
             {season === '2027' ? (
-              current.length ? <div className="grid gap-2.5">{current.map((player) => (
-                <PlayerRow key={player.name} player={player} selected={selectedName === player.name} onSelect={() => setSelectedName(selectedName === player.name ? null : player.name)} />
-              ))}</div> : <p className="py-12 text-center text-sm text-fg3">조건에 맞는 선수가 없습니다.</p>
-            ) : (
-              next.length ? <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">{next.map((player) => (
-                <div key={`${player.team}-${player.name}`} className="flex items-center gap-3 rounded-control border border-line px-3.5 py-3">
-                  <TeamBadge team={player.team} size={32} radius={9} />
-                  <span className="font-semibold text-fg">{player.name}</span>
-                  <span className="ml-auto text-xs text-fg3">{teamName(player.team)} · 예상</span>
+              current.length ? (
+                <div className="grid gap-3">
+                  {current.map((player) => (
+                    <PlayerRow
+                      key={player.name}
+                      player={player}
+                      selected={selectedName === player.name}
+                      onSelect={() => setSelectedName(selectedName === player.name ? null : player.name)}
+                    />
+                  ))}
                 </div>
-              ))}</div> : <p className="py-12 text-center text-sm text-fg3">조건에 맞는 선수가 없습니다.</p>
+              ) : (
+                <p className="py-12 text-center text-sm text-fg3">조건에 맞는 선수가 없습니다.</p>
+              )
+            ) : next.length ? (
+              <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+                {next.map((player) => (
+                  <div
+                    key={`${player.team}-${player.name}`}
+                    className="flex flex-col gap-2 rounded-control border border-line bg-surface px-3.5 py-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <TeamBadge team={player.team} size={32} radius={9} />
+                      <div className="min-w-0 flex-1">
+                        <Link
+                          href={`/players/${player.stats.playerId}`}
+                          className="truncate text-[14px] font-bold text-fg hover:text-accent hover:underline"
+                        >
+                          {player.name}
+                        </Link>
+                        <p className="text-xs text-fg3">
+                          {teamName(player.team)} · {player.stats.role}
+                        </p>
+                      </div>
+                      <span className="tnum rounded-chip bg-surface2 px-2 py-0.5 text-[11.5px] font-semibold text-fg2">
+                        WAR {player.stats.war.toFixed(2)}
+                      </span>
+                    </div>
+                    <p className="tnum text-[11.5px] text-fg2">{player.stats.summaryLine}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="py-12 text-center text-sm text-fg3">조건에 맞는 선수가 없습니다.</p>
             )}
           </div>
         </section>
 
-        {season === '2027' && selected && prediction && (
-          <section className="rounded-card border border-accent/30 bg-surface p-5 shadow-card sm:p-6" aria-live="polite">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold text-accent">행선지 예측 · 실험 기능</p>
-                <h2 className="mt-1 text-[20px] font-bold tracking-[-0.03em] text-fg">{selected.name} → {TEAM_ASSETS[prediction.team].name}</h2>
-              </div>
-              <span className="rounded-chip bg-surface2 px-3 py-1.5 text-xs font-semibold text-fg2">확신도 {prediction.confidence}</span>
+        {/* 10개 구단 포지션별 WAR 요약표 (행선지 예측 근거 데이터) */}
+        <section className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6">
+          <div className="flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold text-accent">예측 모델 입력 데이터</p>
+              <h2 className="mt-1 text-[17px] font-bold tracking-[-0.025em] text-fg">
+                2026 구단별 포지션 WAR 분포
+              </h2>
+              <p className="mt-0.5 text-xs text-fg3">
+                네이버 2026 시즌 전체 선수(타자 359명·투수 293명)의 WAR 합계입니다. 숫자가 낮은 포지션일수록 해당 구단의 FA 보강 수요 점수가 높게 반영됩니다.
+              </p>
             </div>
-            <p className="mt-3 text-[13px] leading-relaxed text-fg2">
-              계약 소식이 아닙니다. 공개된 계약 4건과 FA 등급만 반영한 규칙 기반 기준선이며, 구단 수요·협상·해외 진출은 반영하지 못합니다.
-            </p>
-            <ul className="mt-3 list-disc space-y-1 pl-5 text-[12.5px] leading-relaxed text-fg2">
-              {prediction.reasons.map((reason) => <li key={reason}>{reason}</li>)}
-            </ul>
-          </section>
-        )}
+          </div>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[620px] text-left text-[12.5px]">
+              <thead>
+                <tr className="border-b border-hair text-xs text-fg3">
+                  <th className="py-2 pr-3 font-semibold">구단</th>
+                  <th className="px-2 py-2 text-right font-semibold">정규 순위</th>
+                  <th className="px-2 py-2 text-right font-semibold">포수 WAR</th>
+                  <th className="px-2 py-2 text-right font-semibold">내야수 WAR</th>
+                  <th className="px-2 py-2 text-right font-semibold">외야수 WAR</th>
+                  <th className="px-2 py-2 text-right font-semibold">선발 WAR</th>
+                  <th className="px-2 py-2 text-right font-semibold">불펜 WAR</th>
+                  <th className="pl-2 py-2 text-right font-semibold">팀 ERA / OPS</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-hair">
+                {TEAM_CODES.map((code) => ({ code, ...TEAM_NEEDS_2026[code] }))
+                  .sort((a, b) => a.rank - b.rank)
+                  .map((row) => (
+                    <tr key={row.code} className="hover:bg-surface2/60">
+                      <td className="py-2 pr-3 font-semibold text-fg">
+                        <div className="flex items-center gap-2">
+                          <TeamBadge team={row.code} size={22} radius={6} />
+                          <span>{TEAM_ASSETS[row.code].shortName}</span>
+                        </div>
+                      </td>
+                      <td className="tnum px-2 py-2 text-right text-fg2">{row.rank}위</td>
+                      {(['포수', '내야수', '외야수', '선발', '불펜'] as const).map((pos) => {
+                        const val = row.positionWar[pos];
+                        const isWeak =
+                          (pos === '포수' && val < 1.0) ||
+                          (pos === '내야수' && val < 8.5) ||
+                          (pos === '외야수' && val < 6.0) ||
+                          (pos === '선발' && val < 7.2) ||
+                          (pos === '불펜' && val < 1.0);
+                        return (
+                          <td
+                            key={pos}
+                            className={`tnum px-2 py-2 text-right ${
+                              isWeak ? 'font-bold text-accent' : 'text-fg2'
+                            }`}
+                          >
+                            {val.toFixed(2)}
+                          </td>
+                        );
+                      })}
+                      <td className="tnum pl-2 py-2 text-right text-xs text-fg3">
+                        {row.era.toFixed(2)} / {row.ops.toFixed(3)}
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
 
         <section className="rounded-control border border-line bg-surface2 px-5 py-4 text-[12.5px] leading-relaxed text-fg2">
           <p className="font-semibold text-fg">자료와 해석 기준</p>
-          <p className="mt-1">‘미정’은 계약이 없다고 확정한 뜻이 아니라 {FA_AS_OF.replaceAll('-', '.')}까지 발표를 확인하지 못했다는 뜻입니다. 자동 갱신 데이터가 아닙니다.</p>
-          <p className="mt-1">2028 목록은 KBO 공시가 나오기 전의 비공식 예상입니다. 출전 연수, 계약 옵션, 은퇴 여부에 따라 실제 명단과 달라질 수 있습니다.</p>
+          <p className="mt-1">
+            ‘미정’은 계약이 없다고 확정한 뜻이 아니라 {FA_AS_OF.replaceAll('-', '.')}까지 발표를 확인하지 못했다는 뜻입니다. 자동 갱신 데이터가 아닙니다.
+          </p>
+          <p className="mt-1">
+            행선지 예측은 유료 AI 생성 문장이 아니라, 2026 시즌 선수 WAR·10개 구단 포지션별 WAR 결손도·FA 등급 보상 규정을 조합한 통계적 적합도 기준선입니다.
+          </p>
           <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             <SourceLink href={FA_SOURCES.approved}>KBO 승인 명단</SourceLink>
             <SourceLink href={FA_SOURCES.eligible}>KBO 자격·등급 공시</SourceLink>
@@ -174,32 +350,139 @@ export default function FAMarketPage() {
   );
 }
 
-function PlayerRow({ player, selected, onSelect }: { player: FAPlayer; selected: boolean; onSelect: () => void }) {
+function PlayerRow({
+  player,
+  selected,
+  onSelect,
+}: {
+  player: FAPlayer;
+  selected: boolean;
+  onSelect: () => void;
+}) {
   const signed = !!player.contract;
+  const prediction = !signed ? predictDestination(player) : null;
+
   return (
-    <div className="flex flex-col gap-3 rounded-control border border-line px-3.5 py-3 sm:flex-row sm:items-center sm:gap-4 sm:px-4">
-      <div className="flex min-w-0 items-center gap-3 sm:w-[210px] sm:shrink-0">
-        <TeamBadge team={player.team} size={36} radius={10} />
-        <div className="min-w-0">
-          <p className="truncate text-[14px] font-bold text-fg">{player.name}</p>
-          <p className="text-xs text-fg3">{teamName(player.team)} · {player.grade}등급</p>
+    <div
+      className={`rounded-control border transition-colors ${
+        selected ? 'border-accent/50 bg-surface' : 'border-line bg-surface'
+      }`}
+    >
+      <div className="flex flex-col gap-3 px-3.5 py-3.5 sm:flex-row sm:items-center sm:gap-4 sm:px-4">
+        <div className="flex min-w-0 items-center gap-3 sm:w-[230px] sm:shrink-0">
+          <TeamBadge team={player.team} size={38} radius={10} />
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <Link
+                href={`/players/${player.stats.playerId}`}
+                className="truncate text-[14.5px] font-bold text-fg hover:text-accent hover:underline"
+              >
+                {player.name}
+              </Link>
+              <span className="rounded-chip bg-surface2 px-2 py-0.5 text-[11px] font-semibold text-fg2">
+                {player.stats.role}
+              </span>
+            </div>
+            <p className="mt-0.5 text-xs text-fg3">
+              {teamName(player.team)} · {player.grade}등급 ·{' '}
+              <span className="tnum font-semibold text-fg2">WAR {player.stats.war.toFixed(2)}</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="min-w-0 flex-1">
+          <p className="tnum text-xs text-fg2">{player.stats.summaryLine}</p>
+          {signed && player.contract ? (
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="text-[13.5px] font-bold text-fg">
+                {teamName(player.contract.team)} · {player.contract.years} 최대 {player.contract.maxEok}억원
+              </span>
+              <span className="text-xs text-fg3">
+                ({player.contract.announced.replaceAll('-', '.')} 발표)
+              </span>
+            </div>
+          ) : (
+            <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+              <span className="text-[13px] font-semibold text-fg2">계약 미정</span>
+              {prediction && (
+                <span className="text-xs text-fg3">
+                  · 모델 1순위: <strong className="font-semibold text-accent">{prediction.label}</strong>
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="flex items-center justify-end gap-2 sm:shrink-0">
+          {signed && player.contract ? (
+            <SourceLink href={player.contract.source}>출처</SourceLink>
+          ) : (
+            <button
+              type="button"
+              aria-expanded={selected}
+              onClick={onSelect}
+              className="shrink-0 rounded-chip bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent hover:opacity-80"
+            >
+              {selected ? '예측 닫기' : '행선지 예측'}
+            </button>
+          )}
         </div>
       </div>
-      <div className="flex flex-1 items-center justify-between gap-3 sm:min-w-0">
-        {signed && player.contract ? (
-          <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-fg">{teamName(player.contract.team)} · {player.contract.years} 최대 {player.contract.maxEok}억원</p>
-            <p className="mt-0.5 text-xs text-fg3">계약 완료 · {player.contract.announced.replaceAll('-', '.')} 발표</p>
+
+      {selected && prediction && (
+        <div className="border-t border-hair bg-surface2/55 px-4 py-4 sm:px-5" aria-live="polite">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold text-accent">
+                데이터 기반 행선지 적합도 Top 3 · {player.name} ({player.stats.role} · {player.grade}등급)
+              </p>
+              <h3 className="mt-0.5 text-[16px] font-bold tracking-[-0.025em] text-fg">
+                1순위 예상: {TEAM_ASSETS[prediction.team].name} ({prediction.topCandidates[0].probability}%)
+              </h3>
+            </div>
+            <span className="rounded-chip bg-surface px-2.5 py-1 text-[11.5px] font-semibold text-fg2">
+              확신도 {prediction.confidence} · 공식 발표 전
+            </span>
           </div>
-        ) : (
-          <div><p className="text-[13px] font-semibold text-fg2">계약 미정</p><p className="mt-0.5 text-xs text-fg3">공식 발표 확인 전</p></div>
-        )}
-        {signed && player.contract ? <SourceLink href={player.contract.source}>출처</SourceLink> : (
-          <button type="button" aria-expanded={selected} onClick={onSelect} className="shrink-0 rounded-chip bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent hover:opacity-80">
-            {selected ? '예측 닫기' : '행선지 예측'}
-          </button>
-        )}
-      </div>
+
+          <div className="mt-3.5 grid gap-2.5 sm:grid-cols-3">
+            {prediction.topCandidates.map((cand, idx) => (
+              <div
+                key={cand.team}
+                className={`rounded-control border bg-surface p-3 ${
+                  idx === 0 ? 'border-accent/45' : 'border-line'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <TeamBadge team={cand.team} size={24} radius={6} />
+                    <div>
+                      <p className="text-[13px] font-bold text-fg">
+                        {idx + 1}순위 · {TEAM_ASSETS[cand.team].shortName}
+                      </p>
+                      <p className="text-[10.5px] text-fg3">
+                        {cand.isRetention ? '원소속팀 잔류' : `외부 영입 · ${player.stats.role} WAR ${cand.roleWarRank}위`}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="tnum text-[16px] font-bold text-accent">{cand.probability}%</span>
+                </div>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface2">
+                  <div
+                    className="h-full rounded-full bg-accent"
+                    style={{ width: `${cand.probability}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11.5px] leading-relaxed text-fg2">{cand.rationale}</p>
+              </div>
+            ))}
+          </div>
+
+          <p className="mt-3 text-[11.5px] text-fg3">
+            보상 규정: {prediction.compensationRule}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
