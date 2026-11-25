@@ -16,7 +16,9 @@ const NAV = [
   { href: '/', label: '대시보드' },
   { href: '/records', label: '기록실' },
   { href: '/predictions', label: '우승 확률' },
+  { href: '/postseason', label: '포스트시즌' },
   { href: '/compare', label: '선수 비교' },
+  { href: '/fa', label: 'FA 시장' },
 ];
 
 export const Header: React.FC<HeaderProps> = ({ favoriteTeam, onFavoriteTeamChange }) => {
@@ -33,7 +35,7 @@ export const Header: React.FC<HeaderProps> = ({ favoriteTeam, onFavoriteTeamChan
             KBO AI Brief
           </Link>
 
-          <nav className="ml-2 hidden gap-0.5 sm:flex">
+          <nav className="ml-2 hidden gap-0.5 lg:flex">
             {NAV.map((item) => {
               const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
               return (
@@ -76,6 +78,20 @@ export const Header: React.FC<HeaderProps> = ({ favoriteTeam, onFavoriteTeamChan
           <ThemeToggle />
         </div>
       </div>
+      <nav className="mx-auto flex max-w-shell gap-1 overflow-x-auto border-t border-hair px-4 py-1.5 sm:px-6 lg:hidden" aria-label="주요 메뉴">
+        {NAV.map((item) => {
+          const active = item.href === '/' ? pathname === '/' : pathname.startsWith(item.href);
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`shrink-0 rounded-chip px-3 py-1.5 text-[12.5px] ${active ? 'bg-surface2 font-semibold text-fg' : 'font-medium text-fg2'}`}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
     </header>
   );
 };

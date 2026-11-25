@@ -4,7 +4,7 @@ import React from 'react';
 import Link from 'next/link';
 import { KBOGame } from '../types/kbo';
 import { TeamBadge } from './ui/TeamBadge';
-import { ArrowRightIcon, SparkIcon, StarIcon } from './ui/Icons';
+import { ArrowRightIcon, ChartIcon, StarIcon } from './ui/Icons';
 
 interface MatchCardProps {
   game: KBOGame;
@@ -25,7 +25,11 @@ export const MatchCard: React.FC<MatchCardProps> = ({ game, favoriteTeam, onOpen
     favoriteTeam !== 'NONE' &&
     (game.awayTeam.code === favoriteTeam || game.homeTeam.code === favoriteTeam);
 
-  const headline = isScheduled ? game.aiPreview?.headline : game.aiReview?.headline;
+  // 한 줄 소개도 실제 값에서 만든다. 경기 전이면 선발 맞대결, 그 밖에는 중계 채널이다.
+  const headline =
+    isScheduled && game.awayPitcher && game.homePitcher
+      ? `선발 ${game.awayPitcher} vs ${game.homePitcher}`
+      : '';
 
   // 중계 채널이 여러 개면 'KBS N SPORTS^SBS SPORTS' 처럼 ^ 로 붙어서 온다.
   const broadcast = game.broadcast?.split('^').filter(Boolean).join(' · ');
@@ -114,26 +118,26 @@ export const MatchCard: React.FC<MatchCardProps> = ({ game, favoriteTeam, onOpen
         </div>
       </Link>
 
-      {(headline || game.aiPreview || game.aiReview) && (
+      {(headline || game.hasPreview || game.hasResult) && (
         <div className="mt-3.5 flex items-center justify-between gap-3 border-t border-hair pt-3">
           <p className="min-w-0 flex-1 truncate text-[12.5px] tracking-[-0.01em] text-fg2">{headline}</p>
           <div className="flex shrink-0 items-center gap-2">
-            {game.aiPreview && (
+            {game.hasPreview && (
               <button
                 onClick={() => onOpenBriefing(game, 'PREVIEW')}
                 className="flex items-center gap-1.5 rounded-[9px] bg-accent-soft px-3 py-1.5 text-[12.5px] font-semibold text-accent transition-opacity hover:opacity-80"
               >
-                <SparkIcon size={13} />
-                AI 프리뷰
+                <ChartIcon size={13} />
+                경기 브리핑
               </button>
             )}
-            {game.aiReview && (
+            {game.hasResult && (
               <button
                 onClick={() => onOpenBriefing(game, 'REVIEW')}
                 className="flex items-center gap-1.5 rounded-[9px] bg-accent-soft px-3 py-1.5 text-[12.5px] font-semibold text-accent transition-opacity hover:opacity-80"
               >
-                <SparkIcon size={13} />
-                AI 요약
+                <ChartIcon size={13} />
+                경기 결과
               </button>
             )}
           </div>

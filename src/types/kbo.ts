@@ -11,16 +11,6 @@ export interface KBOTeam {
   logoBg: string;
 }
 
-export interface AIBriefing {
-  id: string;
-  gameId: string;
-  headline: string;
-  summary: string;
-  keyFactors: string[];
-  pitcherAnalysis: string;
-  updatedAt: string;
-}
-
 export interface InningScores {
   away: (number | string)[]; // 1~9회 점수 (예: [0, 1, 0, 2, 0, 0, 0, 0, 0])
   home: (number | string)[]; // 1~9회 점수 (예: [1, 0, 0, 0, 0, 0, 2, 2, 'X'])
@@ -72,8 +62,9 @@ export interface KBOGame {
   awayPitcher: string;
   homePitcher: string;
   broadcast?: string;
-  aiPreview?: AIBriefing;
-  aiReview?: AIBriefing;
+  /** 경기 브리핑을 열 수 있는지. 경기 전이면 선발·팀 흐름, 끝났으면 실제 기록을 보여준다 */
+  hasPreview?: boolean;
+  hasResult?: boolean;
   // 옵션 2 확장 필드
   inningScores?: InningScores;
   awayStats?: TeamGameStats;

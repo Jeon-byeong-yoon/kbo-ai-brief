@@ -5,7 +5,7 @@ import { THEME_STORAGE_KEY } from '@/lib/theme';
 export const metadata: Metadata = {
   title: 'KBO AI Brief - 준실시간 KBO 야구 경기 정보 & AI 관전 포인트',
   description:
-    'KBO 리그 경기 실시간 스코어, 팀 순위 및 OpenAI 기반 AI 경기 프리뷰와 리뷰 요약 서비스를 제공하는 KBO 야구 정보 웹앱입니다.',
+    'KBO 리그 경기 실시간 스코어, 팀 순위, 연도별 기록실, 우승 확률 예측, 투구 위치까지 보는 야구 정보 웹앱입니다.',
 };
 
 export const viewport: Viewport = {

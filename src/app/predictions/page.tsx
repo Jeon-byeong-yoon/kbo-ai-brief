@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { Header } from '@/components/Header';
+import { ChampionBanner } from '@/components/ChampionBanner';
 import { ChampionshipOdds } from '@/components/predictions/ChampionshipOdds';
 import { ChampionshipPrediction } from '@/types/prediction';
 
@@ -41,6 +42,7 @@ export default function PredictionsPage() {
       <Header favoriteTeam={favoriteTeam} onFavoriteTeamChange={handleFavoriteTeamChange} />
 
       <main className="mx-auto flex max-w-shell flex-col gap-5 px-4 pt-6 sm:px-6 lg:px-8">
+        <ChampionBanner />
         {isLoading ? (
           <div className="rounded-card border border-line bg-surface py-24 text-center shadow-card">
             <div className="mx-auto mb-3 h-7 w-7 animate-spin rounded-full border-2 border-line border-t-accent" />
