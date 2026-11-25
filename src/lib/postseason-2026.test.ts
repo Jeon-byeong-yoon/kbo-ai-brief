@@ -9,9 +9,20 @@ describe('2026 postseason bracket', () => {
     }
   });
 
-  it('records actual wins, excluding the wild-card seed advantage', () => {
+  it('records actual wins and game-by-game scores matching series totals', () => {
     expect(POSTSEASON_2026.map((series) => series.teams.map(({ wins }) => wins))).toEqual([
       [1, 0], [3, 0], [3, 2], [1, 4],
     ]);
+
+    for (const series of POSTSEASON_2026) {
+      const totalWins = series.teams[0].wins + series.teams[1].wins;
+      expect(series.games).toHaveLength(totalWins);
+      const winnerGameWins = series.games.filter((g) => {
+        const gameWinner = g.awayScore > g.homeScore ? g.away : g.home;
+        return gameWinner === series.winner;
+      }).length;
+      const expectedWinnerWins = series.teams.find((t) => t.team === series.winner)?.wins ?? 0;
+      expect(winnerGameWins).toBe(expectedWinnerWins);
+    }
   });
 });
