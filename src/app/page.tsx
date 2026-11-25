@@ -9,6 +9,7 @@ import { HistoricalStandings } from '@/components/HistoricalStandings';
 import { PlayerSearch } from '@/components/PlayerSearch';
 import { AIBriefModal } from '@/components/AIBriefModal';
 import { DateStrip } from '@/components/DateStrip';
+import { ChampionBanner } from '@/components/ChampionBanner';
 import { ChartIcon, HistoryIcon, SearchIcon, TrophyIcon } from '@/components/ui/Icons';
 import { formatDateLabel, todayString } from '@/lib/date';
 import {
@@ -189,6 +190,7 @@ export default function HomePage() {
       <Header favoriteTeam={favoriteTeam} onFavoriteTeamChange={handleFavoriteTeamChange} />
 
       <main className="mx-auto flex max-w-shell flex-col gap-5 px-4 pt-6 sm:px-6 lg:px-8">
+        <ChampionBanner />
         {selectedDate && (
           <DateStrip selectedDate={selectedDate} onDateChange={setSelectedDate} today={today} />
         )}
