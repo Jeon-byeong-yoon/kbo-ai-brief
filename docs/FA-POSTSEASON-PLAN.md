@@ -114,6 +114,9 @@ flowchart LR
 - [x] **3단계 — 최근 12개년(2015~2026) 연도별 포스트시즌 사다리 대진표 및 아카이브 (`d208a18`)**
   - `src/lib/postseason-2026.ts` & `src/components/PostseasonBracket.tsx` & `src/app/postseason/page.tsx`: 와일드카드 결정전이 도입된 2015년부터 2026년까지 12개 시즌 전체 포스트시즌 시리즈 대진·승패·차전별 스코어 수록
   - 연도 선택기(`◀ 2026 ▶`)·우승팀 빠른 선택 칩·12개년 가을야구 라운드별 결과 비교표 및 차전별 경기 상세(`/games/[id]`) 연동
-- [x] **4단계 — 우승 확률 예측(`/predictions`) 연도 선택 및 실제 포스트시즌 결과 복기 연동**
+- [x] **4단계 — 우승 확률 예측(`/predictions`) 연도 선택 및 실제 포스트시즌 결과 복기 연동 (`22cb96d`)**
   - `src/app/predictions/page.tsx` & `src/components/predictions/ChampionshipOdds.tsx`: 2008~2026 전 시즌 연도 선택기 추가 및 2015~2026 포스트시즌 실제 우승·준우승 결과와 시뮬레이션 예측 확률을 한 화면에서 대조·복기하는 `PostseasonReviewBanner` 구현
-- [ ] **다음 예정 단계 — 구단 상세 페이지(`/teams/[code]`) 스토브리그(FA·포지션 약점) 통합 및 FA 영입 시뮬레이터**
+- [x] **5단계 — 구단 상세 페이지(`/teams/[code]`) 연도 선택기 및 스토브리그(FA·포지션별 WAR 약점 진단) 통합**
+  - `src/app/teams/[code]/page.tsx`: 2008~2026 시즌 선택기(`◀ 2026 ▶`) 및 해당 시즌 포스트시즌 최종 성적 배지 연동
+  - 구단별 5대 포지션(`포수/내야수/외야수/선발/불펜`) WAR 리그 순위 진단, 내부 2027·2028 FA 대상자 현황, 취약 포지션 기반 외부 미계약 FA 매칭 후보를 한눈에 보여주는 `TeamStoveLeagueSection` 추가
+- [ ] **다음 예정 단계 — FA 영입 시뮬레이터 ("내가 단장이라면" 구단 WAR·예상 승수 변화 계산기) 및 기록실 타이틀 홀더 쇼케이스**
