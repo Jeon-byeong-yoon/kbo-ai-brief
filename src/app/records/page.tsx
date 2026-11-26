@@ -10,6 +10,7 @@ import {
 } from '@/components/records/SeasonTables';
 import { SeasonHeadToHead } from '@/components/records/SeasonHeadToHead';
 import { RankHistory } from '@/components/records/RankHistory';
+import { SeasonTitleHolders } from '@/components/records/SeasonTitleHolders';
 import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/Icons';
 import { FIRST_SEASON, SeasonRecords } from '@/types/season';
 import { HeadToHead } from '@/types/head-to-head';
@@ -171,6 +172,8 @@ export default function RecordsPage() {
       <Header favoriteTeam={favoriteTeam} onFavoriteTeamChange={handleFavoriteTeamChange} />
 
       <main className="mx-auto flex max-w-shell flex-col gap-5 px-4 pt-6 sm:px-6 lg:px-8">
+        {!isLoading && !error && records && <SeasonTitleHolders records={records} />}
+
         <section className="rounded-card border border-line bg-surface shadow-card">
           {/* 연도 네비게이터 */}
           <div className="flex items-center justify-between gap-3 border-b border-hair px-4 py-3.5 sm:px-5">

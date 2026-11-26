@@ -119,6 +119,7 @@ flowchart LR
 - [x] **5단계 — 구단 상세 페이지(`/teams/[code]`) 연도 선택기 및 스토브리그(FA·포지션별 WAR 약점 진단) 통합 (`ff17ffa`)**
   - `src/app/teams/[code]/page.tsx`: 2008~2026 시즌 선택기(`◀ 2026 ▶`) 및 해당 시즌 포스트시즌 최종 성적 배지 연동
   - 구단별 5대 포지션(`포수/내야수/외야수/선발/불펜`) WAR 리그 순위 진단, 내부 2027·2028 FA 대상자 현황, 취약 포지션 기반 외부 미계약 FA 매칭 후보를 한눈에 보여주는 `TeamStoveLeagueSection` 추가
-- [x] **6단계 — FA 영입 시뮬레이터 ("내가 단장이라면" 구단 WAR·예상 승수 변화 계산기)**
+- [x] **6단계 — FA 영입 시뮬레이터 ("내가 단장이라면" 구단 WAR·예상 승수 변화 계산기) (`92bc798`)**
   - `src/lib/fa-market.ts` (`simulateFASignings`) & `src/app/fa/page.tsx` (`FAGMSimulatorSection`): 구단을 선택하고 내부 미계약 FA 잔류/이탈 및 외부 미계약 FA 영입을 조합하면 5대 포지션별 WAR 및 리그 순위 변화, 144경기 환산 예상 승수 증감, 발생 보호선수(20인/25인 외) 보상 부담을 즉시 시뮬레이션하는 인터랙티브 기능 구현
-- [ ] **다음 예정 단계 — 연도별 기록실(`/records`) 시즌 타이틀 홀더 & 포지션별 최고 WAR(골든글러브 후보) 쇼케이스**
+- [x] **7단계 — 연도별 기록실(`/records`) 시즌 타이틀 홀더 & 포스트시즌 우승·확률 복기 연동 쇼케이스**
+  - `src/components/records/SeasonTitleHolders.tsx` & `src/app/records/page.tsx` & `src/lib/season-records.ts`: 2008~2026 각 시즌의 타격 5대 타이틀(타율·홈런·타점·도루·타자 WAR/OPS 1위)과 투구 5대 타이틀(평균자책·다승·탈삼진·세이브·투수 WAR/WHIP 1위) 수상자 쇼케이스 카드 구현 및 해당 연도 포스트시즌 대진표·우승 확률 복기로 즉시 연결
