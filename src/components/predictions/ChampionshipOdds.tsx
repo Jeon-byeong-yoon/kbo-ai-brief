@@ -3,6 +3,7 @@
 import React from 'react';
 import { ChampionshipPrediction } from '@/types/prediction';
 import { TeamBadge } from '@/components/ui/TeamBadge';
+import { findTeam, type TeamCode } from '@/lib/team-assets';
 
 const DEPTH_NOTE: Record<string, string> = {
   'pitcher-only':
@@ -36,7 +37,10 @@ const stamp = (iso: string) => {
 const th = 'whitespace-nowrap pb-2.5 text-center text-2xs font-semibold text-fg3';
 const td = 'tnum border-t border-hair py-2.5 text-center text-[12.5px] text-fg2';
 
-export const ChampionshipOdds: React.FC<{ data: ChampionshipPrediction }> = ({ data }) => {
+export const ChampionshipOdds: React.FC<{
+  data: ChampionshipPrediction;
+  actualChampion?: TeamCode;
+}> = ({ data, actualChampion }) => {
   const top = data.teams[0]?.championshipOdds || 1;
 
   return (
@@ -73,14 +77,22 @@ export const ChampionshipOdds: React.FC<{ data: ChampionshipPrediction }> = ({ d
           {data.teams.map((team) => {
             const ratio = Math.max(team.championshipOdds / top, 0.005);
             const inside = ratio > 0.18;
+            const isActualChamp =
+              actualChampion &&
+              findTeam(team.teamCode, team.shortName, team.teamName)?.code === actualChampion;
             return (
               <div key={team.teamCode} className="flex items-center gap-3">
-                <div className="flex w-[104px] shrink-0 items-center gap-2">
+                <div className="flex w-[132px] shrink-0 items-center gap-2">
                   <span className="tnum w-4 text-2xs font-bold text-fg3">{team.rank}</span>
                   <TeamBadge team={team.teamCode} fallbackLabel={team.shortName} size={22} radius={7} />
                   <span className="truncate text-[12.5px] font-semibold tracking-[-0.025em] text-fg">
                     {team.shortName}
                   </span>
+                  {isActualChamp && (
+                    <span className="rounded-chip bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">
+                      실제 우승
+                    </span>
+                  )}
                 </div>
 
                 <div className="h-[22px] min-w-0 flex-1 overflow-hidden rounded-chip bg-surface2">
