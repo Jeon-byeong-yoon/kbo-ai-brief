@@ -5,6 +5,7 @@ import {
   TEAM_NEEDS_2026,
   positionWarRank,
   predictDestination,
+  simulateFASignings,
 } from './fa-market';
 
 describe('FA market snapshot & multi-factor destination model', () => {
@@ -42,11 +43,28 @@ describe('FA market snapshot & multi-factor destination model', () => {
 
   it('ranks team positional WAR deficits accurately for demand scoring', () => {
     expect(Object.keys(TEAM_NEEDS_2026)).toHaveLength(10);
-    // LG catcher WAR (0.60) is the lowest (10th) in 2026, HANWHA catcher WAR (4.25) is 1st
     expect(positionWarRank('HANWHA', '포수')).toBe(1);
     expect(positionWarRank('LG', '포수')).toBe(10);
-    // KIWOOM bullpen WAR (-1.46) is 10th, SAMSUNG bullpen WAR (10.24) is 1st
     expect(positionWarRank('SAMSUNG', '불펜')).toBe(1);
     expect(positionWarRank('KIWOOM', '불펜')).toBe(10);
+  });
+
+  it('simulates GM FA signings, positional WAR rank upgrades, and compensation rules accurately', () => {
+    // LG retaining 박동원·홍창기 and signing external A-grade starter 원태인 (+2.71 WAR) and C-grade outfielder 김호령 (+2.98 WAR)
+    const sim = simulateFASignings('LG', ['박동원', '홍창기', '원태인', '김호령']);
+    expect(sim.retainedPlayers.map((p) => p.name).sort()).toEqual(['박동원', '홍창기']);
+    expect(sim.lostOwnPlayers).toHaveLength(0);
+    expect(sim.externalSignings.map((p) => p.name).sort()).toEqual(['김호령', '원태인']);
+    expect(sim.addedExternalWar).toBeCloseTo(5.69, 2);
+    expect(sim.netWarDelta).toBeCloseTo(5.69, 2);
+
+    const starterImpact = sim.roleImpacts.find((r) => r.role === '선발')!;
+    expect(starterImpact.beforeWar).toBeCloseTo(6.57, 2);
+    expect(starterImpact.afterWar).toBeCloseTo(9.28, 2);
+    expect(starterImpact.afterRank).toBeLessThan(starterImpact.beforeRank);
+
+    expect(sim.compensationSummary.gradeACount).toBe(1);
+    expect(sim.compensationSummary.gradeCCount).toBe(1);
+    expect(sim.compensationSummary.protected20Count).toBe(1);
   });
 });

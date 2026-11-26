@@ -76,6 +76,37 @@ export type FADestinationPrediction = {
   reasons: string[];
 };
 
+export type FASimulationRoleImpact = {
+  role: FAPositionRole;
+  beforeWar: number;
+  afterWar: number;
+  deltaWar: number;
+  beforeRank: number;
+  afterRank: number;
+};
+
+export type FASimulationResult = {
+  team: TeamCode;
+  retainedPlayers: FAPlayer[];
+  externalSignings: FAPlayer[];
+  lostOwnPlayers: FAPlayer[];
+  externalCountLimitExceeded: boolean;
+  addedExternalWar: number;
+  lostOwnWar: number;
+  netWarDelta: number;
+  baseWins: number;
+  projectedWins: number;
+  roleImpacts: FASimulationRoleImpact[];
+  compensationSummary: {
+    gradeACount: number;
+    gradeBCount: number;
+    gradeCCount: number;
+    protected20Count: number;
+    protected25Count: number;
+    items: Array<{ player: FAPlayer; rule: string }>;
+  };
+};
+
 /**
  * 네이버 KBO 2026 시즌 10개 구단 정규시즌 성적 및 포지션별 로스터 WAR 합계.
  * (타자 359명·투수 293명 전원 집계, 80이닝 이상 투수는 선발, 미만은 불펜으로 분류)
@@ -992,3 +1023,103 @@ export function predictDestination(player: FAPlayer): FADestinationPrediction | 
     ],
   };
 }
+
+const ALL_ROLES: readonly FAPositionRole[] = ['포수', '내야수', '외야수', '선발', '불펜'];
+
+/**
+ * "내가 단장이라면" FA 영입·잔류 시뮬레이터.
+ *
+ * 선택한 구단(targetTeam)과 영입·잔류 체크한 미계약 FA 선수 이름 목록(selectedNames)을 받아:
+ *  - 타 구단에서 영입한 선수의 WAR는 해당 포지션에 더하고
+ *  - 우리 구단 소속 미계약 FA 중 체크하지 않은(이탈 가정) 선수의 양수 WAR는 해당 포지션에서 차감하여
+ * 5대 포지션별 WAR 및 10개 구단 내 순위 변화, 2027 시즌 예상 승수 증감, 발생 보상선수/보상금을 계산한다.
+ */
+export function simulateFASignings(
+  targetTeam: TeamCode,
+  selectedNames: readonly string[],
+): FASimulationResult {
+  const selectedSet = new Set(selectedNames);
+  const pendingPlayers = FA_2027.filter((p) => !p.contract);
+
+  const retainedPlayers = pendingPlayers.filter(
+    (p) => p.team === targetTeam && selectedSet.has(p.name),
+  );
+  const lostOwnPlayers = pendingPlayers.filter(
+    (p) => p.team === targetTeam && !selectedSet.has(p.name),
+  );
+  const externalSignings = pendingPlayers.filter(
+    (p) => p.team !== targetTeam && selectedSet.has(p.name),
+  );
+
+  // KBO FA 외부 영입 상한(승인 선수 수 기준 최대 3명까지가 일반적인 상한선)
+  const externalCountLimitExceeded = externalSignings.length > 3;
+
+  const addedExternalWar = Number(
+    externalSignings.reduce((sum, p) => sum + p.stats.war, 0).toFixed(2),
+  );
+  const lostOwnWar = Number(
+    lostOwnPlayers.reduce((sum, p) => sum + Math.max(0, p.stats.war), 0).toFixed(2),
+  );
+  const netWarDelta = Number((addedExternalWar - lostOwnWar).toFixed(2));
+
+  const roleImpacts: FASimulationRoleImpact[] = ALL_ROLES.map((role) => {
+    const beforeWar = TEAM_NEEDS_2026[targetTeam].positionWar[role];
+    const addedRoleWar = externalSignings
+      .filter((p) => p.stats.role === role)
+      .reduce((sum, p) => sum + p.stats.war, 0);
+    const lostRoleWar = lostOwnPlayers
+      .filter((p) => p.stats.role === role)
+      .reduce((sum, p) => sum + Math.max(0, p.stats.war), 0);
+    const deltaWar = Number((addedRoleWar - lostRoleWar).toFixed(2));
+    const afterWar = Number((beforeWar + deltaWar).toFixed(2));
+
+    const beforeRank = positionWarRank(targetTeam, role);
+    const simulatedLeagueWars = TEAM_CODES.map((code) => ({
+      code,
+      war: code === targetTeam ? afterWar : TEAM_NEEDS_2026[code].positionWar[role],
+    })).sort((a, b) => b.war - a.war);
+    const afterRank = simulatedLeagueWars.findIndex((item) => item.code === targetTeam) + 1;
+
+    return {
+      role,
+      beforeWar,
+      afterWar,
+      deltaWar,
+      beforeRank,
+      afterRank,
+    };
+  });
+
+  const baseWins = Math.round(TEAM_NEEDS_2026[targetTeam].winRate * 144);
+  const projectedWins = Number(Math.max(30, Math.min(115, baseWins + netWarDelta)).toFixed(1));
+
+  const gradeACount = externalSignings.filter((p) => p.grade === 'A').length;
+  const gradeBCount = externalSignings.filter((p) => p.grade === 'B').length;
+  const gradeCCount = externalSignings.filter((p) => p.grade === 'C').length;
+
+  return {
+    team: targetTeam,
+    retainedPlayers,
+    externalSignings,
+    lostOwnPlayers,
+    externalCountLimitExceeded,
+    addedExternalWar,
+    lostOwnWar,
+    netWarDelta,
+    baseWins,
+    projectedWins,
+    roleImpacts,
+    compensationSummary: {
+      gradeACount,
+      gradeBCount,
+      gradeCCount,
+      protected20Count: gradeACount,
+      protected25Count: gradeBCount,
+      items: externalSignings.map((player) => ({
+        player,
+        rule: GRADE_COMPENSATION_RULES[player.grade],
+      })),
+    },
+  };
+}
+

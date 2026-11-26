@@ -126,8 +126,8 @@ export async function fetchSeasonRecords(year: number): Promise<SeasonRecords> {
 
   const [teams, hitters, pitchers] = await Promise.all([
     fetchJson(`/${year}/teams`, revalidate).catch(() => null),
-    fetchJson(`/${year}/players?playerType=HITTER`, revalidate).catch(() => null),
-    fetchJson(`/${year}/players?playerType=PITCHER`, revalidate).catch(() => null),
+    fetchJson(`/${year}/players?playerType=HITTER&pageSize=500`, revalidate).catch(() => null),
+    fetchJson(`/${year}/players?playerType=PITCHER&pageSize=500`, revalidate).catch(() => null),
   ]);
 
   const teamRows: Raw[] = teams?.result?.seasonTeamStats ?? [];
