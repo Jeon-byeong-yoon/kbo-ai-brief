@@ -13,6 +13,7 @@ import {
   FA_SOURCES,
   TEAM_NEEDS_2026,
   predictDestination,
+  simulateFASignings,
   type FAPlayer,
   type FAPositionRole,
 } from '@/lib/fa-market';
@@ -261,6 +262,9 @@ export default function FAMarketPage() {
           </div>
         </section>
 
+        {/* "내가 단장이라면" FA 영입·잔류 시뮬레이터 */}
+        <FAGMSimulatorSection favoriteTeam={favoriteTeam} />
+
         {/* 10개 구단 포지션별 WAR 요약표 (행선지 예측 근거 데이터) */}
         <section className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6">
           <div className="flex flex-wrap items-end justify-between gap-2">
@@ -484,5 +488,333 @@ function PlayerRow({
         </div>
       )}
     </div>
+  );
+}
+
+function FAGMSimulatorSection({ favoriteTeam }: { favoriteTeam: string }) {
+  const defaultTeam: TeamCode = TEAM_CODES.includes(favoriteTeam as TeamCode)
+    ? (favoriteTeam as TeamCode)
+    : 'SAMSUNG';
+  const [targetTeam, setTargetTeam] = useState<TeamCode>(defaultTeam);
+
+  const pendingPlayers = useMemo(() => FA_2027.filter((p) => !p.contract), []);
+
+  // 구단을 바꾸면 해당 구단의 내부 미계약 FA 선수들은 기본적으로 '잔류 체크' 상태로 시작
+  const [selectedNames, setSelectedNames] = useState<string[]>(() =>
+    pendingPlayers.filter((p) => p.team === defaultTeam).map((p) => p.name),
+  );
+
+  useEffect(() => {
+    if (TEAM_CODES.includes(favoriteTeam as TeamCode)) {
+      const code = favoriteTeam as TeamCode;
+      setTargetTeam(code);
+      setSelectedNames(pendingPlayers.filter((p) => p.team === code).map((p) => p.name));
+    }
+  }, [favoriteTeam, pendingPlayers]);
+
+  const handleTeamChange = (code: TeamCode) => {
+    setTargetTeam(code);
+    setSelectedNames(pendingPlayers.filter((p) => p.team === code).map((p) => p.name));
+  };
+
+  const togglePlayer = (name: string) => {
+    setSelectedNames((prev) =>
+      prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name],
+    );
+  };
+
+  const sim = useMemo(
+    () => simulateFASignings(targetTeam, selectedNames),
+    [targetTeam, selectedNames],
+  );
+
+  const ownPending = useMemo(
+    () => pendingPlayers.filter((p) => p.team === targetTeam),
+    [pendingPlayers, targetTeam],
+  );
+  const externalPending = useMemo(
+    () =>
+      pendingPlayers
+        .filter((p) => p.team !== targetTeam)
+        .sort((a, b) => b.stats.war - a.stats.war),
+    [pendingPlayers, targetTeam],
+  );
+
+  return (
+    <section
+      aria-label="내가 단장이라면 FA 영입 시뮬레이터"
+      className="rounded-card border border-line bg-surface p-5 shadow-card sm:p-6"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-hair pb-4">
+        <div>
+          <span className="text-xs font-semibold text-accent">스토브리그 시뮬레이터</span>
+          <h2 className="mt-0.5 text-[18px] font-bold tracking-[-0.03em] text-fg">
+            내가 단장이라면 — 구단별 FA 영입·잔류 WAR 계산기
+          </h2>
+          <p className="mt-0.5 text-xs text-fg3">
+            구단을 고르고 내부 FA 잔류 또는 외부 FA 영입을 체크하면 포지션별 WAR 리그 순위 변화, 2027 시즌 예상 승수 증감, 발생 보상선수 규정을 즉시 계산합니다.
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              setSelectedNames(pendingPlayers.filter((p) => p.team === targetTeam).map((p) => p.name))
+            }
+            className="rounded-chip bg-surface2 px-3 py-1.5 text-xs font-semibold text-fg2 hover:text-fg"
+          >
+            기본(내부 잔류만) 초기화
+          </button>
+        </div>
+      </div>
+
+      {/* 구단 선택 칩 */}
+      <div className="mt-3.5 flex gap-1.5 overflow-x-auto pb-1">
+        {TEAM_CODES.map((code) => {
+          const active = code === targetTeam;
+          return (
+            <button
+              key={code}
+              type="button"
+              onClick={() => handleTeamChange(code)}
+              className={`flex shrink-0 items-center gap-1.5 rounded-chip border px-3 py-1.5 text-xs transition-colors ${
+                active
+                  ? 'border-accent bg-accent-soft font-bold text-accent'
+                  : 'border-line bg-surface2/50 font-medium text-fg2 hover:border-accent/40 hover:text-fg'
+              }`}
+            >
+              <TeamBadge team={code} size={16} radius={4} />
+              <span>{TEAM_ASSETS[code].shortName}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 상단 시뮬레이션 결과 요약 카드 4개 */}
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <div className="rounded-control border border-line bg-surface2/50 p-3.5">
+          <p className="text-xs text-fg3">순수 WAR 증감</p>
+          <p
+            className={`tnum mt-1 text-[21px] font-bold tracking-[-0.03em] ${
+              sim.netWarDelta > 0
+                ? 'text-accent'
+                : sim.netWarDelta < 0
+                  ? 'text-lose'
+                  : 'text-fg'
+            }`}
+          >
+            {sim.netWarDelta > 0 ? `+${sim.netWarDelta.toFixed(2)}` : sim.netWarDelta.toFixed(2)}
+            <span className="ml-1 text-xs font-medium text-fg3">WAR</span>
+          </p>
+          <p className="tnum mt-0.5 text-[11px] text-fg3">
+            외부 +{sim.addedExternalWar.toFixed(2)} / 이탈 -{sim.lostOwnWar.toFixed(2)}
+          </p>
+        </div>
+
+        <div className="rounded-control border border-line bg-surface2/50 p-3.5">
+          <p className="text-xs text-fg3">예상 승수 변화 (144경기 환산)</p>
+          <p className="tnum mt-1 text-[21px] font-bold tracking-[-0.03em] text-fg">
+            {sim.baseWins}승 → <span className="text-accent">{sim.projectedWins}승</span>
+          </p>
+          <p className="mt-0.5 text-[11px] text-fg3">
+            2026 정규 {TEAM_NEEDS_2026[targetTeam].rank}위 기준
+          </p>
+        </div>
+
+        <div className="rounded-control border border-line bg-surface2/50 p-3.5">
+          <p className="text-xs text-fg3">선택한 계약 구성</p>
+          <p className="tnum mt-1 text-[18px] font-bold tracking-[-0.03em] text-fg">
+            내부 잔류 {sim.retainedPlayers.length}명 · 외부 {sim.externalSignings.length}명
+          </p>
+          <p className="mt-0.5 text-[11px] text-fg3">
+            {sim.lostOwnPlayers.length > 0
+              ? `내부 미계약 이탈 가정: ${sim.lostOwnPlayers.map((p) => p.name).join(', ')}`
+              : '내부 FA 전원 잔류 시나리오'}
+          </p>
+        </div>
+
+        <div className="rounded-control border border-line bg-surface2/50 p-3.5">
+          <p className="text-xs text-fg3">발생 보상선수 부담</p>
+          <p className="tnum mt-1 text-[17px] font-bold tracking-[-0.03em] text-fg">
+            20인 외 {sim.compensationSummary.protected20Count}명 · 25인 외{' '}
+            {sim.compensationSummary.protected25Count}명
+          </p>
+          <p className="mt-0.5 text-[11px] text-fg3">
+            외부 A등급 {sim.compensationSummary.gradeACount} · B등급{' '}
+            {sim.compensationSummary.gradeBCount} · C등급 {sim.compensationSummary.gradeCCount}
+          </p>
+        </div>
+      </div>
+
+      {sim.externalCountLimitExceeded && (
+        <p className="mt-3 rounded-control border border-accent/40 bg-accent-soft/30 px-3.5 py-2 text-xs font-semibold text-accent">
+          참고: 외부 FA를 {sim.externalSignings.length}명 선택했습니다. KBO 규정상 외부 FA 영입 상한(통상 최대 3명)을 초과하는 가상 시나리오입니다.
+        </p>
+      )}
+
+      {/* 5대 포지션 WAR 및 리그 순위 변화 */}
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
+        {sim.roleImpacts.map((impact) => {
+          const rankUp = impact.afterRank < impact.beforeRank;
+          const rankDown = impact.afterRank > impact.beforeRank;
+          return (
+            <div
+              key={impact.role}
+              className={`rounded-control border px-3.5 py-2.5 ${
+                impact.deltaWar > 0
+                  ? 'border-accent/45 bg-accent-soft/20'
+                  : impact.deltaWar < 0
+                    ? 'border-lose/40 bg-lose-soft/20'
+                    : 'border-line bg-surface2/35'
+              }`}
+            >
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-fg">{impact.role}</span>
+                <span
+                  className={`tnum font-bold ${
+                    rankUp ? 'text-accent' : rankDown ? 'text-lose' : 'text-fg3'
+                  }`}
+                >
+                  {impact.beforeRank}위 → {impact.afterRank}위
+                </span>
+              </div>
+              <p className="tnum mt-1 text-[15px] font-bold text-fg">
+                {impact.beforeWar.toFixed(2)} → {impact.afterWar.toFixed(2)}
+              </p>
+              <p className="tnum text-[11px] text-fg3">
+                {impact.deltaWar > 0
+                  ? `+${impact.deltaWar.toFixed(2)} WAR 상승`
+                  : impact.deltaWar < 0
+                    ? `${impact.deltaWar.toFixed(2)} WAR 감소`
+                    : '변동 없음'}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 선수 선택 체크리스트 (내부 잔류 / 외부 영입) */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-control border border-line bg-surface2/30 p-4">
+          <h3 className="text-[13.5px] font-bold text-fg">
+            1. {TEAM_ASSETS[targetTeam].shortName} 내부 미계약 FA 잔류 선택 ({ownPending.length}명)
+          </h3>
+          <p className="mt-0.5 text-[11.5px] text-fg3">
+            체크 해제 시 타 구단 이적(전력 이탈)으로 계산됩니다.
+          </p>
+          {ownPending.length === 0 ? (
+            <p className="mt-3 text-xs text-fg3">
+              현재 {TEAM_ASSETS[targetTeam].shortName} 소속 미계약 FA가 없습니다.
+            </p>
+          ) : (
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {ownPending.map((player) => {
+                const checked = selectedNames.includes(player.name);
+                return (
+                  <button
+                    key={player.name}
+                    type="button"
+                    onClick={() => togglePlayer(player.name)}
+                    className={`flex items-center justify-between gap-2 rounded-control border px-3 py-2 text-left text-xs transition-colors ${
+                      checked
+                        ? 'border-accent bg-accent-soft/35 text-fg'
+                        : 'border-line bg-surface text-fg2 hover:border-accent/40'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate font-bold">
+                        {checked ? '✓ ' : ''}
+                        {player.name}{' '}
+                        <span className="font-normal text-fg3">
+                          ({player.stats.role} · {player.grade})
+                        </span>
+                      </p>
+                      <p className="tnum text-[11px] text-fg3">
+                        WAR {player.stats.war.toFixed(2)} · {player.stats.primaryMetricLabel}{' '}
+                        {player.stats.primaryMetricValue}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-chip px-2 py-0.5 text-[10.5px] font-bold ${
+                        checked ? 'bg-accent text-white' : 'bg-surface2 text-fg3'
+                      }`}
+                    >
+                      {checked ? '잔류' : '이탈'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-control border border-line bg-surface2/30 p-4">
+          <h3 className="text-[13.5px] font-bold text-fg">
+            2. 외부 미계약 FA 영입 선택 ({externalPending.length}명)
+          </h3>
+          <p className="mt-0.5 text-[11.5px] text-fg3">
+            영입할 타 구단 FA 선수를 클릭해 추가해 보세요 (2026 WAR 순).
+          </p>
+          <div className="mt-3 grid max-h-[230px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+            {externalPending.map((player) => {
+              const checked = selectedNames.includes(player.name);
+              return (
+                <button
+                  key={player.name}
+                  type="button"
+                  onClick={() => togglePlayer(player.name)}
+                  className={`flex items-center justify-between gap-2 rounded-control border px-3 py-2 text-left text-xs transition-colors ${
+                    checked
+                      ? 'border-accent bg-accent-soft/35 text-fg'
+                      : 'border-line bg-surface text-fg2 hover:border-accent/40'
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-2">
+                    <TeamBadge team={player.team} size={22} radius={6} />
+                    <div className="min-w-0">
+                      <p className="truncate font-bold">
+                        {checked ? '✓ ' : ''}
+                        {player.name}{' '}
+                        <span className="font-normal text-fg3">
+                          ({player.stats.role} · {player.grade})
+                        </span>
+                      </p>
+                      <p className="tnum text-[11px] text-fg3">
+                        WAR +{player.stats.war.toFixed(2)} · {player.stats.primaryMetricLabel}{' '}
+                        {player.stats.primaryMetricValue}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`shrink-0 rounded-chip px-2 py-0.5 text-[10.5px] font-bold ${
+                      checked ? 'bg-accent text-white' : 'bg-surface2 text-fg3'
+                    }`}
+                  >
+                    {checked ? '영입' : '선택'}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {sim.compensationSummary.items.length > 0 && (
+        <div className="mt-3.5 rounded-control border border-line bg-surface2/45 px-4 py-3 text-xs text-fg2">
+          <p className="font-bold text-fg">외부 영입에 따른 KBO 보상 규정 내역</p>
+          <ul className="mt-1.5 list-disc space-y-1 pl-4 text-[11.5px]">
+            {sim.compensationSummary.items.map(({ player, rule }) => (
+              <li key={player.name}>
+                <strong className="text-fg">
+                  {player.name} (원소속 {TEAM_ASSETS[player.team].shortName})
+                </strong>
+                : {rule}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </section>
   );
 }
